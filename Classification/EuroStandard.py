@@ -3,7 +3,7 @@ import logging
 info_logger = logging.getLogger('info_logger' + '.EuroStandard')
 
 
-def euro_standard_identification_by_year_of_manufacturing(row) -> str:
+def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
     """
     Returns the Euro Standard Legislation/technology depending of the vehicle Category, Fuel and year of manufacturing
     The dates are taken from the Date(first registration) on https://en.wikipedia.org/wiki/European_emission_standards
@@ -13,52 +13,61 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str:
     """
 
     if row['Category'] == 'Passenger Cars':
-        if row['Fuel'] != 'Battery Electric':  # No Euro Category for electric cars
-            # Acording to Copert there is no Petrol Mini less than EURO 4
-            if row['Fuel'] == 'Petrol' and row['Segment'] == 'Mini' and row['ANY_FABRICACIO'] < 2011:
-                return 'Euro 4'
-            # Acording to Copert there is no Petrol Hybrid less than EURO 4
-            if row['Fuel'] == 'Petrol Hybrid' and row['ANY_FABRICACIO'] < 2011:
-                return 'Euro 4'
-            # Acording to Copert there is no Petrol/Diesel PHEV less than EURO 6 a/b/c
-            if (row['Fuel'] == 'Petrol PHEV' or row['Fuel'] == 'Diesel PHEV') and row['ANY_FABRICACIO'] < 2020:
+        if row['Fuel'] == 'Battery Electric':
+            if row['ANY_FABRICACIO'] < 2019:
                 return 'Euro 6 a/b/c'
-
-            if row['ANY_FABRICACIO'] < 1978:
-                if row['Fuel'] == 'Diesel':
-                    return 'Conventional'
-                return 'ECE 15/00-01'
-            elif 1978 < row['ANY_FABRICACIO'] < 1981:
-                if row['Fuel'] == 'Diesel':
-                    return 'Conventional'
-                return 'ECE 15/02'
-            elif 1981 < row['ANY_FABRICACIO'] < 1985:
-                if row['Fuel'] == 'Diesel':
-                    return 'Conventional'
-                return 'ECE 15/03'
-            elif 1985 < row['ANY_FABRICACIO'] < 1993:
-                if row['Fuel'] == 'Diesel':
-                    return 'Conventional'
-                return 'ECE 15/04'
-            elif 1993 <= row['ANY_FABRICACIO'] < 1997:
-                return 'Euro 1'
-            elif 1997 <= row['ANY_FABRICACIO'] < 2001:
-                return 'Euro 2'
-            elif 2001 <= row['ANY_FABRICACIO'] < 2006:
-                return 'Euro 3'
-            elif 2006 <= row['ANY_FABRICACIO'] < 2011:
-                return 'Euro 4'
-            elif 2011 <= row['ANY_FABRICACIO'] < 2016:
-                return 'Euro 5'
-            elif 2016 <= row['ANY_FABRICACIO'] < 2020:
-                return 'Euro 6 a/b/c'
-            elif 2020 <= row['ANY_FABRICACIO'] < 2021:
+            elif row['ANY_FABRICACIO'] <= 2020:
                 return 'Euro 6 d-temp'
-            elif row['ANY_FABRICACIO'] >= 2021:
+            elif row['ANY_FABRICACIO'] < 2026:
                 return 'Euro 6 d/e'
-        else:
-            return None
+            elif row['ANY_FABRICACIO'] >= 2026:
+                return 'Euro 7'
+            else:
+                return None
+        
+        # Acording to Copert there is no Petrol Mini less than EURO 4
+        if row['Fuel'] == 'Petrol' and row['Segment'] == 'Mini' and row['ANY_FABRICACIO'] < 2011:
+            return 'Euro 4'
+        # Acording to Copert there is no Petrol Hybrid less than EURO 4
+        if row['Fuel'] == 'Petrol Hybrid' and row['ANY_FABRICACIO'] < 2011:
+            return 'Euro 4'
+        # Acording to Copert there is no Petrol/Diesel PHEV less than EURO 6 a/b/c
+        if (row['Fuel'] == 'Petrol PHEV' or row['Fuel'] == 'Diesel PHEV') and row['ANY_FABRICACIO'] < 2020:
+            return 'Euro 6 a/b/c'
 
+        if row['ANY_FABRICACIO'] < 1978:
+            if row['Fuel'] == 'Diesel':
+                return 'Conventional'
+            return 'ECE 15/00-01'
+        elif 1978 < row['ANY_FABRICACIO'] < 1981:
+            if row['Fuel'] == 'Diesel':
+                return 'Conventional'
+            return 'ECE 15/02'
+        elif 1981 < row['ANY_FABRICACIO'] < 1985:
+            if row['Fuel'] == 'Diesel':
+                return 'Conventional'
+            return 'ECE 15/03'
+        elif 1985 < row['ANY_FABRICACIO'] < 1993:
+            if row['Fuel'] == 'Diesel':
+                return 'Conventional'
+            return 'ECE 15/04'
+        elif 1993 <= row['ANY_FABRICACIO'] < 1997:
+            return 'Euro 1'
+        elif 1997 <= row['ANY_FABRICACIO'] < 2001:
+            return 'Euro 2'
+        elif 2001 <= row['ANY_FABRICACIO'] < 2006:
+            return 'Euro 3'
+        elif 2006 <= row['ANY_FABRICACIO'] < 2011:
+            return 'Euro 4'
+        elif 2011 <= row['ANY_FABRICACIO'] < 2016:
+            return 'Euro 5'
+        elif 2016 <= row['ANY_FABRICACIO'] < 2020:
+            return 'Euro 6 a/b/c'
+        elif 2020 <= row['ANY_FABRICACIO'] < 2021:
+            return 'Euro 6 d-temp'
+        elif row['ANY_FABRICACIO'] >= 2021:
+            return 'Euro 6 d/e'
+            
     # Technology classification of Light Commercial Vehicles
     elif row['Category'] == 'Light Commercial Vehicles':
         if row['Segment'] == 'N1-I':
@@ -122,7 +131,16 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str:
                 elif row['ANY_FABRICACIO'] >= 2021:
                     return 'Euro 6 d/e'
             elif row['Fuel'] == 'Battery Electric':
-                return None
+                if row['ANY_FABRICACIO'] < 2019:
+                    return 'Euro 6 a/b/c'
+                elif row['ANY_FABRICACIO'] <= 2020:
+                    return 'Euro 6 d-temp'
+                elif row['ANY_FABRICACIO'] < 2026:
+                    return 'Euro 6 d/e'
+                elif row['ANY_FABRICACIO'] >= 2026:
+                    return 'Euro 7'
+                else:
+                    return None
 
     # Technology classification of Heavy Duty Trucks
     elif row['Category'] == 'Heavy Duty Trucks':
@@ -173,6 +191,13 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str:
                 return 'Euro VI A/B/C'
             elif row['ANY_FABRICACIO'] >= 2020:
                 return 'Euro VI D/E'
+        elif row['Fuel'] == 'Battery Electric':
+            if row['ANY_FABRICACIO'] < 2019:
+                return 'Euro VI A/B/C'
+            elif row['ANY_FABRICACIO'] < 2028:
+                return 'Euro VI D/E'
+            elif row['ANY_FABRICACIO'] >= 2028:
+                return 'Euro VII'
         else:
             info_logger.warning('Bus with no Euro Standard: ')
             info_logger.warning(row)
