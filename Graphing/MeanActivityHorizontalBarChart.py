@@ -9,14 +9,11 @@ def all_categories_grouping(row: pd.Series) -> str:
     """
     Merge Category, Fuel and segment to a single string for unique categorization
     """
-    if row['Fuel'] == 'Battery Electric':
-        return row['Fuel'] + ' / ' + row['Segment']
-    else:
-        try:
-            result = row['Fuel'] + ' / ' + row['Segment'] + ' / ' + row['Euro Standard']
-        except:  # For Off Road type with no Segment nor Euro Standard
-            result = row['Fuel']
-        return result
+    try:
+        result = row['Fuel'] + ' / ' + row['Segment'] + ' / ' + row['Euro Standard']
+    except:  # For Off Road type with no Segment nor Euro Standard
+        result = row['Fuel']
+    return result
 
 
 def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame.groupby, output_folder):
