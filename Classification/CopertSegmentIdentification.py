@@ -111,7 +111,7 @@ def segment_identification_for_each_category(row: pd.Series) -> str:
             elif row['KW'] < 145:
                 return 'Medium'
             else:
-                return 'Large'
+                return 'Large-SUV-Executive'
         
         elif row['Category'] == 'Light Commercial Vehicles':
             if row['PES_BUIT'] < 1305:
