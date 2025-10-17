@@ -89,11 +89,11 @@ def segment_identification_for_each_category(row: pd.Series) -> str:
                 return 'Motorcycles 4-stroke >750 cm³'
 
             # Some errors detected that can be solved looking into CV column
-            elif (0.4 < row['CV'] <= 0.5) and row['Fuel'] != 'Battery Electric':
+            elif (0.4 < row['CV'] <= 0.5) and row['Fuel'] != 'Battery electric':
                 return 'Mopeds 2-stroke <50 cm³'
-            elif 0.5 < row['CV'] < 2.5 and row['Fuel'] != 'Battery Electric':
+            elif 0.5 < row['CV'] < 2.5 and row['Fuel'] != 'Battery electric':
                 return 'Motorcycles 4-stroke <250 cm³'
-            elif 2.5 < row['CV'] <= 7.5 and row['Fuel'] != 'Battery Electric':
+            elif 2.5 < row['CV'] <= 7.5 and row['Fuel'] != 'Battery electric':
                 return 'Motorcycles 4-stroke 250 - 750 cm³'
 
             else:

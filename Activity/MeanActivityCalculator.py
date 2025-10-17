@@ -172,7 +172,7 @@ def activity_stats_calculator_by_grouping(row: pd.Series, vehicles_df: pd.DataFr
                 return mean_activity, min_activity, max_activity, std_activity, mean_lifetime_activity
 
         # Electrical vehicles (No Euro Standard) with no minimal stock per segment
-        elif row['Fuel'] == 'Battery Electric' and pd.isna(row['Std_Activity']):
+        elif row['Fuel'] == 'Battery electric' and pd.isna(row['Std_Activity']):
             partitions = ['Category']
             mean_activity, min_activity, max_activity, std_activity, mean_lifetime_activity = activity_stats_calculator(
                 vehicles_df, row, partitions, min_stock, assigned_euro_standard, assigned_fuel)

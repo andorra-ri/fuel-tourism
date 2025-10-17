@@ -18,8 +18,8 @@ def figures_to_html(figs, filename="dashboard.html"):
 
 def categories_grouping(row):
     """Group hybrid and PHEV type without segment associated to avoid too large segmentations when plotting"""
-    if row['Fuel'] == 'Battery Electric':
-        return 'Battery Electric'
+    if row['Fuel'] == 'Battery electric':
+        return 'Battery electric'
     if row['Fuel'] in HYBRID_PHEV_TYPES:
         if 'Hybrid' in row['Fuel']:
             return 'Hybrid'
@@ -82,7 +82,7 @@ def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df
               'rgb(8,48,107)', 'rgb(33,113,181)', 'rgb(107,174,214)', 'rgb(198,219,239)', # Color for Diesel Mini
               'rgb(127,39,4)', 'rgb(217,72,1)', 'rgb(253,141,60)', 'rgb(253,208,162)', 'rgb(171,171,171)' 
               ]
-    category_orders = {"segmentation": ['Battery Electric', 'PHEV', 'Hybrid',
+    category_orders = {"segmentation": ['Battery electric', 'PHEV', 'Hybrid',
                                         'Diesel Large-SUV-Executive', 'Diesel Medium', 'Diesel Small',
                                         'Diesel Mini',
                                         'Petrol Large-SUV-Executive', 'Petrol Medium', 'Petrol Small',
@@ -103,7 +103,7 @@ def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df
               'rgb(8,48,107)', 'rgb(33,113,181)', 'rgb(107,174,214)',
               'rgb(127,39,4)', 'rgb(217,72,1)', 'rgb(253,141,60)', 'rgb(199,233,192)', 'rgb(247,252,245)'
               ]
-    category_orders = {"segmentation": ['Battery Electric', 'Diesel N1-I', 'Diesel N1-II',
+    category_orders = {"segmentation": ['Battery electric', 'Diesel N1-I', 'Diesel N1-II',
                                         'Diesel N1-III', 'Petrol N1-I', 'Petrol N1-II', 'Petrol N1-III',
                                         'Hybrid']
                        }
@@ -169,7 +169,7 @@ def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df
               # Diesel
               'rgb(107,174,214)', 'rgb(203,24,29)', 'rgb(165,15,21)', 'rgb(103,0,13)'
               ]
-    category_orders = {"segmentation": ['Battery Electric',
+    category_orders = {"segmentation": ['Battery electric',
                                         'Petrol Mopeds 2-stroke <50 cm³',
                                         'Petrol Motorcycles 4-stroke <250 cm³',
                                         'Petrol Motorcycles 4-stroke 250 - 750 cm³',

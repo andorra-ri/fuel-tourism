@@ -13,7 +13,7 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
     """
 
     if row['Category'] == 'Passenger Cars':
-        if row['Fuel'] == 'Battery Electric':
+        if row['Fuel'] == 'Battery electric':
             if row['ANY_FABRICACIO'] < 2019:
                 return 'Euro 6 a/b/c'
             elif row['ANY_FABRICACIO'] <= 2020:
@@ -130,7 +130,7 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
                     return 'Euro 6 d-temp'
                 elif row['ANY_FABRICACIO'] >= 2021:
                     return 'Euro 6 d/e'
-            elif row['Fuel'] == 'Battery Electric':
+            elif row['Fuel'] == 'Battery electric':
                 if row['ANY_FABRICACIO'] < 2019:
                     return 'Euro 6 a/b/c'
                 elif row['ANY_FABRICACIO'] <= 2020:
@@ -191,7 +191,7 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
                 return 'Euro VI A/B/C'
             elif row['ANY_FABRICACIO'] >= 2020:
                 return 'Euro VI D/E'
-        elif row['Fuel'] == 'Battery Electric':
+        elif row['Fuel'] == 'Battery electric':
             if row['ANY_FABRICACIO'] < 2019:
                 return 'Euro VI A/B/C'
             elif row['ANY_FABRICACIO'] < 2028:
