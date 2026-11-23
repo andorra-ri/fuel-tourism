@@ -1,4 +1,4 @@
-# fuel-tourism
+# andorra-fleet-activity
 Analysis of the ITV data of the vehicle register of Andorra (Excel format) to estimate the stock and the activity
 (km/year) of the fleet per vehicle type, so the fuel consumption can be estimated with COPERT and LEAP.
 The complete documentation (in Catalan) is in `README.md`.

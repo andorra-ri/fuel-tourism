@@ -1,4 +1,4 @@
-# Image to run the calculation as a Cloud Run Job (see docs/cloud.md)
+# andorra-fleet-activity: image to run the calculation as a Cloud Run Job (see docs/cloud.md)
 FROM python:3.12-slim
 
 WORKDIR /app

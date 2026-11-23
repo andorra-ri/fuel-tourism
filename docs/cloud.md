@@ -39,19 +39,19 @@ El `Dockerfile` executa `python main.py` amb els arguments del job. Els registre
 
 ```bash
 # Imatge
-gcloud builds submit --tag europe-west1-docker.pkg.dev/<projecte>/<repo>/fleet-activity
+gcloud builds submit --tag europe-west1-docker.pkg.dev/<projecte>/<repo>/andorra-fleet-activity
 
 # Compte de servei amb els rols: Storage Object Admin al bucket, BigQuery Data Editor i BigQuery Job User
-gcloud iam service-accounts create fleet-activity-job
+gcloud iam service-accounts create andorra-fleet-activity-job
 
 # Job (l'Excel s'ha de pujar abans a gs://<bucket>/raw/<AAAAMMDD>/)
-gcloud run jobs create fleet-activity-2026 \
-  --image europe-west1-docker.pkg.dev/<projecte>/<repo>/fleet-activity \
-  --region europe-west1 --service-account fleet-activity-job@<projecte>.iam.gserviceaccount.com \
+gcloud run jobs create andorra-fleet-activity-2026 \
+  --image europe-west1-docker.pkg.dev/<projecte>/<repo>/andorra-fleet-activity \
+  --region europe-west1 --service-account andorra-fleet-activity-job@<projecte>.iam.gserviceaccount.com \
   --memory 4Gi --task-timeout 30m \
   --args="--settings,settings_2026,--stage,all"
 
-gcloud run jobs execute fleet-activity-2026 --region europe-west1
+gcloud run jobs execute andorra-fleet-activity-2026 --region europe-west1
 ```
 
 Si l'Excel no és a la carpeta local, l'etapa `calculate` el descarrega de `raw/<AAAAMMDD>/`. Perquè el job també

@@ -1,4 +1,4 @@
-# fuel-tourism
+# andorra-fleet-activity
 Aquest mòdul permet tractar l’Excel del Registre de vehicles i les seves dades respecte a les revisions ITV per tal de:
 * Classificar els vehicles segons la seva categoria, utilitzant les classificacions de COPERT (és el estàndard de la Unió Europea pel càlcul d’emissions dels vehicles).
 * Obtenció de l'estoc a una data de referència (31/12 de l'any d'estudi) i dels patrons d’activitat (km/any) segons la tipologia de vehicle (permet el càlcul del consum dels vehicles amb COPERT).
