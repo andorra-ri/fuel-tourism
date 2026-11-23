@@ -73,13 +73,20 @@ def snake_case_schema(schema: dict) -> dict:
 
 
 def copert_view_sql(project: str, dataset: str) -> str:
-    """View with the names of the columns that COPERT uses"""
+    """
+    View with the names that COPERT uses (same as exports/copert): LPG Bifuel, segment "-" and Euro Standard empty when
+    there is none. Off Road and electric motorcycles, that COPERT does not cover, are left out.
+    """
     return f"""
 CREATE OR REPLACE VIEW `{project}.{dataset}.copert_stock_activity` AS
 SELECT snapshot_date, study_year,
-       category AS Category, fuel AS Fuel, segment AS Segment, euro_standard AS `Euro Standard`,
+       category AS Category,
+       IF(fuel = 'LPG Bi-fuel', 'LPG Bifuel', fuel) AS Fuel,
+       IFNULL(segment, '-') AS Segment,
+       IFNULL(euro_standard, '') AS `Euro Standard`,
        stock AS Stock, mean_activity AS Mean_Activity, mean_lifetime_activity AS Mean_Lifetime_Activity
 FROM `{project}.{dataset}.stock_activity`
+WHERE category != 'Off Road' AND NOT (category = 'L-Category' AND fuel = 'Battery electric')
 """
 
 

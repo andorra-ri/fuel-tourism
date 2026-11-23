@@ -153,3 +153,8 @@ def test_cloud_settings_are_required(tmp_path):
     settings.GCS_BUCKET = None
     with pytest.raises(ValueError):
         upload.check_cloud_settings(settings)
+
+
+def test_copert_view_has_the_same_rules_as_the_copert_file():
+    sql = schema.copert_view_sql('project', 'dataset')
+    assert "LPG Bifuel" in sql and "'Off Road'" in sql and "IFNULL(segment, '-')" in sql

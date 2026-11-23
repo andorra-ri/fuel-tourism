@@ -24,7 +24,7 @@ DEFAULTS = {
     'ELECTRIC_MOTORCYCLES_MJ_PER_100KM': 16,
     # Google Cloud (see cloud/). The upload is only done if the project and the bucket are defined
     'GCP_PROJECT': 'ari-datahub',
-    'GCS_BUCKET': None,                           # Bucket not decided yet: without it Cloud Storage is skipped
+    'GCS_BUCKET': 'raw_fleet_activity',
     'BQ_LOCATION': 'europe-west9',
     'BQ_DATASET_AGGREGATED': 'aggregated_fleet',
     # Only the aggregated tables (no data of individual vehicles) are uploaded unless these are True

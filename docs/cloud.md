@@ -1,7 +1,7 @@
 # Google Cloud: Cloud Storage i BigQuery (ari-datahub)
 
-Aquest codi **no s'ha provat contra un projecte real de Google Cloud**: la lògica de càrrega es comprova amb clients
-simulats (`tests/test_outputs_and_cloud.py`). L'ordre recomanat és assajar-ho primer sense tocar res:
+La primera càrrega real (estudi 2025) es va fer el 23/11/2026. La lògica també es comprova amb clients simulats
+(`tests/test_outputs_and_cloud.py`). Per assajar sense tocar res:
 
 ```
 python main.py --settings settings_2026 --stage upload --dry-run
@@ -19,7 +19,7 @@ Valors per defecte a `pipeline/settings_loader.py`, es poden redefinir al fitxer
 
 ```python
 GCP_PROJECT = 'ari-datahub'
-GCS_BUCKET = None                      # pendent de decidir; sense bucket s'omet Cloud Storage
+GCS_BUCKET = 'raw_fleet_activity'     # creat el 23/11/2026 a europe-west9, accés uniforme i sense accés públic
 BQ_LOCATION = 'europe-west9'           # com els buckets del datahub
 BQ_DATASET_AGGREGATED = 'aggregated_fleet'
 ```
