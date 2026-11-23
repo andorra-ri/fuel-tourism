@@ -23,11 +23,14 @@ DEFAULTS = {
     'PHEV_ELECTRICITY_SHARE': 0.40,               # Share of the energy of the PHEV vehicles that is electricity
     'ELECTRIC_MOTORCYCLES_MJ_PER_100KM': 16,
     # Google Cloud (see cloud/). The upload is only done if the project and the bucket are defined
-    'GCP_PROJECT': None,
-    'GCS_BUCKET': None,
-    'BQ_LOCATION': 'EU',
-    'BQ_DATASET_CURATED': 'fuel_curated',
-    'BQ_DATASET_AGGREGATED': 'fuel_aggregated',
+    'GCP_PROJECT': 'ari-datahub',
+    'GCS_BUCKET': None,                           # Bucket not decided yet: without it Cloud Storage is skipped
+    'BQ_LOCATION': 'europe-west9',
+    'BQ_DATASET_AGGREGATED': 'aggregated_fleet',
+    # Only the aggregated tables (no data of individual vehicles) are uploaded unless these are True
+    'UPLOAD_CURATED': False,                      # One row per vehicle (dataset BQ_DATASET_CURATED)
+    'UPLOAD_RAW': False,                          # The original Excel, with the plate numbers
+    'BQ_DATASET_CURATED': 'curated_fleet',
 }
 REQUIRED = ['RAW_FILENAME', 'SNAPSHOT_DATE', 'STUDY_YEAR']
 

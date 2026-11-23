@@ -24,6 +24,8 @@ def parse_arguments(argv=None) -> argparse.Namespace:
                         help='name of the python module with the settings of the study (default: settings_2026)')
     parser.add_argument('--stage', default='all', choices=STAGES, help='stage to run (default: all)')
     parser.add_argument('--show', action='store_true', help='open the charts in the browser')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='stage upload: only show what would be created and uploaded, without touching Google Cloud')
     parser.add_argument('--copert-results', default=None,
                         help='csv file with the electricity demand calculated by COPERT (stage export)')
     return parser.parse_args(argv)
@@ -52,7 +54,7 @@ def main(argv=None):
         run_leap_export(settings, paths, args.copert_results)
     if args.stage == 'upload':
         from cloud.upload import run_upload
-        run_upload(settings, paths)
+        run_upload(settings, paths, dry_run=args.dry_run)
     logger.info('end')
 
 

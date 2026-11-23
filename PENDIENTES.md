@@ -27,7 +27,9 @@ clasificación validada contra `Stock_Configuration_Andorra.csv` de COPERT, 60 p
 
 ## Técnicos
 
-11. **Google Cloud sin probar contra un proyecto real** (solo con clientes simulados). Necesita proyecto, bucket y permisos.
+11. **Google Cloud sin probar contra un proyecto real** (solo con clientes simulados). Proyecto `ari-datahub`, región
+    `europe-west9`, solo tablas agregadas (dataset `aggregated_fleet`). **Falta decidir el bucket** (`GCS_BUCKET`); hasta
+    entonces la etapa `upload` omite Cloud Storage. Ensayo sin tocar nada: `python main.py --settings settings_2026 --stage upload --dry-run`.
 12. **Renombrar el repositorio a `andorra-fleet-activity`** en GitHub: lo tiene que hacer un administrador de la organización
     (`gh repo rename andorra-fleet-activity`). Dentro del código ya se llama así (README, Docker); el paquete Python sigue siendo
     un conjunto de carpetas, no `andorra_fleet_activity`.

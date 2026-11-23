@@ -26,8 +26,9 @@ from pipeline.paths import OutputPaths
 logger = logging.getLogger('logger' + '.cloud')
 
 
-def check_cloud_settings(settings: SimpleNamespace):
-    if not settings.GCP_PROJECT or not settings.GCS_BUCKET:
+def check_cloud_settings(settings: SimpleNamespace, bucket_needed: bool = True):
+    """GCP_PROJECT is always needed; GCS_BUCKET only to use Cloud Storage (BigQuery does not need it)"""
+    if not settings.GCP_PROJECT or (bucket_needed and not settings.GCS_BUCKET):
         raise ValueError('GCP_PROJECT and GCS_BUCKET must be defined in the settings to use Google Cloud')
 
 
@@ -47,21 +48,32 @@ def download_raw_file(settings: SimpleNamespace) -> Path:
     return path
 
 
+def files_to_upload(settings: SimpleNamespace, paths: OutputPaths) -> list:
+    """
+    (blob name, local file) to upload. Only the aggregated tables, that have no data of individual vehicles, unless
+    UPLOAD_CURATED (one row per vehicle) or UPLOAD_RAW (the original Excel, with the plate numbers) are True.
+    """
+    files = []
+    for file in sorted(paths.aggregated.glob('*')):
+        files.append((f'aggregated/{paths.snapshot}/{file.name}', file))
+    if getattr(settings, 'UPLOAD_CURATED', False):
+        for file in sorted(paths.curated.glob('*')):
+            files.append((f'curated/{paths.snapshot}/{file.name}', file))
+    if getattr(settings, 'UPLOAD_RAW', False):
+        files.append((raw_blob_name(settings), Path(settings.path_registre_vehicles)))
+    return files
+
+
 def upload_files(settings: SimpleNamespace, paths: OutputPaths, storage_client=None) -> list:
-    """Upload the original Excel and the curated and aggregated files to Cloud Storage. Returns the blob names"""
+    """Upload the files of files_to_upload to Cloud Storage. Returns the blob names"""
     check_cloud_settings(settings)
     if storage_client is None:
         from google.cloud import storage
         storage_client = storage.Client(project=settings.GCP_PROJECT)
     bucket = storage_client.bucket(settings.GCS_BUCKET)
 
-    files = [(raw_blob_name(settings), Path(settings.path_registre_vehicles))]
-    for folder_name, folder in (('curated', paths.curated), ('aggregated', paths.aggregated)):
-        for file in sorted(folder.glob('*')):
-            files.append((f'{folder_name}/{paths.snapshot}/{file.name}', file))
-
     uploaded = []
-    for blob_name, file in files:
+    for blob_name, file in files_to_upload(settings, paths):
         if not file.exists():
             logger.warning(f'File not uploaded, it does not exist: {file}')
             continue
@@ -125,13 +137,16 @@ def load_table(bigquery_client, bigquery_module, project: str, dataset: str, tab
 
 def load_bigquery(settings: SimpleNamespace, paths: OutputPaths, bigquery_client=None, bigquery_module=None):
     """Create the datasets, load the tables and create the views"""
-    check_cloud_settings(settings)
+    check_cloud_settings(settings, bucket_needed=False)
     if bigquery_module is None:
         from google.cloud import bigquery as bigquery_module
     if bigquery_client is None:
         bigquery_client = bigquery_module.Client(project=settings.GCP_PROJECT)
 
-    for dataset in (settings.BQ_DATASET_CURATED, settings.BQ_DATASET_AGGREGATED):
+    datasets = [settings.BQ_DATASET_AGGREGATED]
+    if getattr(settings, 'UPLOAD_CURATED', False):
+        datasets.append(settings.BQ_DATASET_CURATED)
+    for dataset in datasets:
         dataset_object = bigquery_module.Dataset(f'{settings.GCP_PROJECT}.{dataset}')
         dataset_object.location = settings.BQ_LOCATION
         bigquery_client.create_dataset(dataset_object, exists_ok=True)
@@ -146,18 +161,47 @@ def load_bigquery(settings: SimpleNamespace, paths: OutputPaths, bigquery_client
         load_table(bigquery_client, bigquery_module, settings.GCP_PROJECT, settings.BQ_DATASET_AGGREGATED, table, df,
                    schema, snapshot_date, settings.STUDY_YEAR, settings.BQ_LOCATION)
 
-    # Vehicles: the types of the columns come from the parquet file, that keeps them
-    vehicles = pd.read_parquet(paths.fleet_vehicles_parquet)
-    schema = curated_schema(vehicles)
-    load_table(bigquery_client, bigquery_module, settings.GCP_PROJECT, settings.BQ_DATASET_CURATED, 'vehicles',
-               prepare_table(vehicles, schema), schema, snapshot_date, settings.STUDY_YEAR, settings.BQ_LOCATION)
+    if getattr(settings, 'UPLOAD_CURATED', False):
+        # Vehicles: the types of the columns come from the parquet file, that keeps them
+        vehicles = pd.read_parquet(paths.fleet_vehicles_parquet)
+        schema = curated_schema(vehicles)
+        load_table(bigquery_client, bigquery_module, settings.GCP_PROJECT, settings.BQ_DATASET_CURATED, 'vehicles',
+                   prepare_table(vehicles, schema), schema, snapshot_date, settings.STUDY_YEAR, settings.BQ_LOCATION)
 
     for sql in (copert_view_sql(settings.GCP_PROJECT, settings.BQ_DATASET_AGGREGATED),
                 leap_view_sql(settings.GCP_PROJECT, settings.BQ_DATASET_AGGREGATED)):
         bigquery_client.query(sql, location=settings.BQ_LOCATION).result()
 
 
-def run_upload(settings: SimpleNamespace, paths: OutputPaths):
-    """Run the stage upload: Cloud Storage and BigQuery"""
-    upload_files(settings, paths)
+def upload_plan(settings: SimpleNamespace, paths: OutputPaths) -> list:
+    """Lines that describe what the stage upload would create and upload, without touching Google Cloud"""
+    lines = [f'Project: {settings.GCP_PROJECT}  Location: {settings.BQ_LOCATION}']
+    bucket = settings.GCS_BUCKET or '(no bucket defined: Cloud Storage is skipped)'
+    lines.append(f'Bucket: {bucket}')
+    for blob_name, file in files_to_upload(settings, paths):
+        lines.append(f'  file   gs://{settings.GCS_BUCKET or "<bucket>"}/{blob_name}   <-  {file.name}')
+    datasets = [settings.BQ_DATASET_AGGREGATED] + ([settings.BQ_DATASET_CURATED]
+                                                    if getattr(settings, 'UPLOAD_CURATED', False) else [])
+    for dataset in datasets:
+        lines.append(f'  dataset {settings.GCP_PROJECT}.{dataset} (created if it does not exist)')
+    for table in AGGREGATED_SCHEMAS:
+        lines.append(f'  table   {settings.GCP_PROJECT}.{settings.BQ_DATASET_AGGREGATED}.{table}  '
+                     f'(rows of snapshot {paths.snapshot}, study {settings.STUDY_YEAR} replaced)')
+    lines.append(f'  views   copert_stock_activity, leap_stock_activity in {settings.BQ_DATASET_AGGREGATED}')
+    return lines
+
+
+def run_upload(settings: SimpleNamespace, paths: OutputPaths, dry_run: bool = False):
+    """
+    Run the stage upload: Cloud Storage (if there is a bucket defined) and BigQuery.
+    With dry_run only the plan is shown, nothing is created or uploaded.
+    """
+    if dry_run:
+        for line in upload_plan(settings, paths):
+            print(line)
+        return
+    if settings.GCS_BUCKET:
+        upload_files(settings, paths)
+    else:
+        logger.warning('GCS_BUCKET is not defined: the files are not uploaded to Cloud Storage')
     load_bigquery(settings, paths)

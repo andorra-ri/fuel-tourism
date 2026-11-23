@@ -14,7 +14,8 @@ from data_cleaning.type_conversion import convert_to_integer_df_columns
 def make_settings(tmp_path):
     return SimpleNamespace(SNAPSHOT_DATE=datetime(2026, 10, 19), STUDY_YEAR=2025, BASE_FOLDER=tmp_path,
                            OUTPUT_FOLDER='output', GCP_PROJECT='project', GCS_BUCKET='bucket', BQ_LOCATION='EU',
-                           BQ_DATASET_CURATED='fuel_curated', BQ_DATASET_AGGREGATED='fuel_aggregated',
+                           BQ_DATASET_CURATED='curated_fleet', BQ_DATASET_AGGREGATED='aggregated_fleet',
+                           UPLOAD_RAW=False, UPLOAD_CURATED=False,
                            RAW_FILENAME='raw.xlsx', path_registre_vehicles=tmp_path / 'raw.xlsx')
 
 
@@ -117,9 +118,34 @@ def test_upload_files_uses_the_layers_of_the_bucket(tmp_path):
     settings.path_registre_vehicles.write_text('excel')
     paths.stock_activity.write_text('a,b')
     storage_client = mock.MagicMock()
+    paths.fleet_vehicles_csv.write_text('plate,1')
+    uploaded = upload.upload_files(settings, paths, storage_client)
+    # Only the aggregated tables: no data of individual vehicles nor the original Excel
+    assert uploaded == ['aggregated/20261019/fleet_stock_activity_2025_20261019.csv']
+
+    settings.UPLOAD_RAW = True
+    settings.UPLOAD_CURATED = True
     uploaded = upload.upload_files(settings, paths, storage_client)
     assert 'raw/20261019/raw.xlsx' in uploaded
-    assert 'aggregated/20261019/fleet_stock_activity_2025_20261019.csv' in uploaded
+    assert 'curated/20261019/fleet_vehicles_2025_20261019.csv' in uploaded
+
+
+def test_dry_run_does_not_use_google_cloud(tmp_path, capsys):
+    settings = make_settings(tmp_path)
+    settings.GCS_BUCKET = None
+    paths = OutputPaths(settings)
+    paths.create_folders()
+    paths.stock_activity.write_text('a,b')
+    with mock.patch.dict('sys.modules', {'google': None, 'google.cloud': None}):
+        upload.run_upload(settings, paths, dry_run=True)
+    output = capsys.readouterr().out
+    assert 'aggregated_fleet' in output and 'curated' not in output and 'vehicles' not in output
+
+
+def test_bigquery_does_not_need_the_bucket(tmp_path):
+    settings = make_settings(tmp_path)
+    settings.GCS_BUCKET = None
+    upload.check_cloud_settings(settings, bucket_needed=False)
 
 
 def test_cloud_settings_are_required(tmp_path):
