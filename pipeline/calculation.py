@@ -50,6 +50,10 @@ def add_snapshot_columns(df: pd.DataFrame, settings: SimpleNamespace) -> pd.Data
 
 def classify_fleet(settings: SimpleNamespace, paths: OutputPaths):
     """Load the register, keep the stock of the reference date and classify it. Returns (vehicles, discarded cars)"""
+    if not settings.path_registre_vehicles.exists() and settings.GCS_BUCKET:
+        # Cloud execution: the original Excel is in the bucket (raw/<AAAAMMDD>/)
+        from cloud.upload import download_raw_file
+        download_raw_file(settings)
     itv_raw = register_ingestor_function(settings.path_registre_vehicles)
     stock_df = filter_fleet_stock_at_reference_date(
         itv_raw, settings.REFERENCE_DATE, settings.MIN_YEAR, settings.MAX_YEAR, settings.SNAPSHOT_DATE)
@@ -74,8 +78,8 @@ def calculate_vehicles_activity(vehicles_df: pd.DataFrame, settings: SimpleNames
 def stock_by_year(vehicles_df: pd.DataFrame, year_column: str) -> pd.DataFrame:
     """Number of vehicles (Stock) per Category, Fuel, Segment and year"""
     df = vehicles_df.copy()
-    if year_column == 'DATA_ALTA':
-        df['DATA_ALTA'] = df['DATA_ALTA'].dt.year
+    if year_column == 'ANY_ALTA':
+        df['ANY_ALTA'] = df['DATA_ALTA'].dt.year
     result = df.groupby(['Category', 'Fuel', 'Segment', year_column], dropna=False, as_index=False).agg(
         Stock=(year_column, 'count'))
     return result.sort_values(by=['Category', 'Fuel', 'Segment', year_column], ascending=True)
@@ -164,7 +168,7 @@ def run_calculation(settings: SimpleNamespace, paths: OutputPaths) -> dict:
     # AGGREGATED
     by_manufacturing_year = add_snapshot_columns(stock_by_year(categorized_vehicles_df, 'ANY_FABRICACIO'), settings)
     by_manufacturing_year.to_csv(paths.stock_by_manufacturing_year, index=False)
-    by_registration_year = add_snapshot_columns(stock_by_year(categorized_vehicles_df, 'DATA_ALTA'), settings)
+    by_registration_year = add_snapshot_columns(stock_by_year(categorized_vehicles_df, 'ANY_ALTA'), settings)
     by_registration_year.to_csv(paths.stock_by_registration_year, index=False)
 
     stock_activity = stock_and_activity_per_category(categorized_vehicles_df, settings)

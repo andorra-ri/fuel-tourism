@@ -3,3 +3,6 @@ ordered-set
 xlrd
 openpyxl
 plotly
+pyarrow
+google-cloud-storage
+google-cloud-bigquery[pandas]
