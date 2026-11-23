@@ -1,29 +1,21 @@
-def convert_to_integer_df_columns(stock_and_mileage_df):
+import logging
+
+import pandas as pd
+
+logger = logging.getLogger('logger' + '.TypeConvertion')
+
+ACTIVITY_STATISTICS_COLUMNS = ['Mean_Activity', 'Min_Activity', 'Max_Activity', 'Std_Activity', 'Mean_Lifetime_Activity']
+
+
+def convert_to_integer_df_columns(stock_and_mileage_df: pd.DataFrame):
     """
-    Convert to integer activity statistics columns of the stock and mileage dataframe and check for nans
+    Convert to integer (nullable Int64) the activity statistics columns of the stock and mileage dataframe.
+    Values that could not be calculated are kept as null, they are not replaced by 0, and the number of them is logged.
     """
-    try:
-        stock_and_mileage_df['Mean_Activity'] = stock_and_mileage_df['Mean_Activity'].fillna(0).astype(int)
-    except ValueError:
-        print('Check for nan values in the stock_and_mileage dataframe: Mean activity')
-
-    try:
-        stock_and_mileage_df['Min_Activity'] = stock_and_mileage_df['Min_Activity'].fillna(0).astype(int)
-    except ValueError:
-        print('Check for nan values in the stock_and_mileage dataframe: Min activity')
-
-    try:
-        stock_and_mileage_df['Max_Activity'] = stock_and_mileage_df['Max_Activity'].fillna(0).astype(int)
-    except ValueError:
-        print('Check for nan values in the stock_and_mileage dataframe: Max activity')
-
-    try:
-        stock_and_mileage_df['Std_Activity'] = stock_and_mileage_df['Std_Activity'].fillna(0).astype(int)
-    except ValueError:
-        print('Check for nan values in the stock_and_mileage dataframe: Standard deviation activity')
-
-    try:
-        stock_and_mileage_df['Mean_Lifetime_Activity'] = stock_and_mileage_df['Mean_Lifetime_Activity'].fillna(0)\
-            .astype(int)
-    except ValueError:
-        print('Check for nan values in the stock_and_mileage dataframe: Mean_Lifetime_Activity')
+    for column in ACTIVITY_STATISTICS_COLUMNS:
+        values = pd.to_numeric(stock_and_mileage_df[column], errors='coerce')
+        number_of_nulls = int(values.isna().sum())
+        if number_of_nulls > 0:
+            logger.warning(f'Check for nan values in the stock_and_mileage dataframe: {column}. '
+                           f'Number of categories with no value: {number_of_nulls}')
+        stock_and_mileage_df[column] = values.round().astype('Int64')

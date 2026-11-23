@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import plotly.graph_objects as go
 import pandas as pd
 
@@ -11,18 +13,20 @@ def all_categories_grouping(row: pd.Series) -> str:
     """
     try:
         result = row['Fuel'] + ' / ' + row['Segment'] + ' / ' + row['Euro Standard']
-    except:  # For Off Road type with no Segment nor Euro Standard
+    except TypeError:  # For Off Road type with no Segment nor Euro Standard
         result = row['Fuel']
     return result
 
 
-def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame.groupby, output_folder):
+def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame, output_folder, show: bool = False
+                                  ) -> go.Figure:
     """
     Horizontal bar chart representing mean activity and other activities per unique categorization
 
     :param stock_and_mileage_df: Dataframe of the  vehicles registration list
     :param output_folder: output folder name where to store resulting chart
-    :return: an html file containing the horizontal bar chart of the mean activity
+    :param show: if True, the figure is also opened in the browser (for local use)
+    :return: the figure. It is also saved in an html file containing the horizontal bar chart of the mean activity
     """
     data = stock_and_mileage_df.copy()
 
@@ -36,7 +40,7 @@ def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame.groupby, ou
 
     # Add Activity statistics and stock traces
     horizontal_plot.add_trace(go.Scatter(y=data['segmentation'], x=data['Max_Activity'], mode='markers',
-                                         name='Activitat màxima', marker_color='rgb(288, 26, 28)'
+                                         name='Activitat màxima', marker_color='rgb(228, 26, 28)'
                                          ))
 
     horizontal_plot.add_trace(go.Scatter(y=data['segmentation'], x=data['Min_Activity'], mode='markers',
@@ -44,17 +48,17 @@ def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame.groupby, ou
                                          ))
     horizontal_plot.add_trace(go.Scatter(y=data['segmentation'], x=data['Std_Activity'], mode='markers',
                                          name="Desviació standard de l'activitat", showlegend=False, marker=dict(
-            color='rgb(800, 800, 800)',
+            color='rgb(255, 255, 255)',
             opacity=0)
                                          ))
     horizontal_plot.add_trace(go.Scatter(y=data['segmentation'], x=data['Stock'], mode='markers',
                                          name="Estoc", showlegend=False, marker=dict(
-            color='rgb(800, 800, 800)',
+            color='rgb(255, 255, 255)',
             opacity=0)
                                          ))
     horizontal_plot.add_trace(go.Scatter(y=data['segmentation'], x=data['Mean_Lifetime_Activity'], mode='markers',
                                          name="Lifetime cumulative activity mitja", showlegend=False, marker=dict(
-            color='rgb(800, 800, 800)',
+            color='rgb(255, 255, 255)',
             opacity=0)
                                          ))
 
@@ -79,12 +83,15 @@ def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame.groupby, ou
         hoverlabel=dict(namelength=100),
         xaxis_range=[0, stock_and_mileage_df['Max_Activity'].max()*1.05],
         xaxis=dict(
-            range=[0, max(data['Stock'].max(), data['Max_Activity'].max(), data['Min_Activity'].max(), data['Std_Activity'].max())]
+            range=[0, max(data['Stock'].max(), data['Max_Activity'].max(), data['Min_Activity'].max(),
+                          data['Std_Activity'].max())]
         )
     )
     horizontal_plot.update_xaxes(showgrid=True, zeroline=True)
-    horizontal_plot.show()
 
     # Save plot to html file
-    filename = output_folder + "Activitat mitjana anual segons classificació del parc de vehicles d'Andorra.html"
+    filename = Path(output_folder) / "Activitat mitjana anual segons classificació del parc de vehicles d'Andorra.html"
     horizontal_plot.write_html(filename)
+    if show:
+        horizontal_plot.show()
+    return horizontal_plot

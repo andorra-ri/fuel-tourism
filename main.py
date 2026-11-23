@@ -42,6 +42,7 @@ from settings import (
     MIN_STOCK_FOR_MEAN_ACTIVITY_CALCULATION,
     COVID_MILEAGE_ACTIVE,
     COVID_START_DATE,
+    SEGMENT_RANDOM_SEED,
     OUTPUT_FOLDER,
     filename_output_categorized_vehicle_data,
     filename_output_stock_activity,
@@ -86,7 +87,8 @@ info_logger.info(f'Total number of vehicles taken into account: {good_vehicles_d
 
 
 # CATEGORIZING VEHICLES
-categorized_vehicles_df = category_fuel_segment_euro_classification_wrapper_function(good_vehicles_df)
+categorized_vehicles_df = category_fuel_segment_euro_classification_wrapper_function(
+    good_vehicles_df, random_seed=SEGMENT_RANDOM_SEED)
 
 # Create columns Mileage, number of days and corresponding Activity for each vehicle
 categorized_vehicles_df['Num_of_days'], categorized_vehicles_df['Mileage'], categorized_vehicles_df['Activity'], \
@@ -110,7 +112,7 @@ categorized_vehicles_df['Activity'], categorized_vehicles_df['Lifetime Activity'
 # Save cleaned, categorized data and vehicle activity to csv
 print_info(categorized_vehicles_df) # print info
 logger.info('Saving cleaned, categorized data and vehicle activity to csv')
-categorized_vehicles_df.to_csv(filename_output_categorized_vehicle_data)
+categorized_vehicles_df.to_csv(filename_output_categorized_vehicle_data, index=False)
 
 # Grouping per manufactuing year
 veh_per_manuf_year_df = categorized_vehicles_df.groupby(['Category', 'Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False, as_index=False).agg(
@@ -155,7 +157,7 @@ mileage_df = categorized_vehicles_df_before_covid.groupby(
 
 # Join stock configuration with associated mileage
 stock_and_mileage_df = pd.merge(stock_df, mileage_df, on=['Category', 'Fuel', 'Segment', 'Euro Standard'], how='left')
-stock_and_mileage_df['Notna_Count'].fillna(0, inplace=True)
+stock_and_mileage_df['Notna_Count'] = stock_and_mileage_df['Notna_Count'].fillna(0)
 
 # Calculate stadistics for categorizations that do not have enough data, by grouping
 stats_df = stock_and_mileage_df.apply(
@@ -178,7 +180,7 @@ stock_and_mileage_df = pd.concat(
 convert_to_integer_df_columns(stock_and_mileage_df)
 
 logger.info('Saving stock and activity to csv')
-stock_and_mileage_df.drop(['Notna_Count'], axis=1).to_csv(filename_output_stock_activity)
+stock_and_mileage_df.drop(['Notna_Count'], axis=1).to_csv(filename_output_stock_activity, index=False)
 logger.info(f'Number of categories: {stock_and_mileage_df.shape[0]}')
 # Save wanted results
 logger.info('Loading charts')

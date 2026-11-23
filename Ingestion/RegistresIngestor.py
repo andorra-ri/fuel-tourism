@@ -4,7 +4,6 @@ import logging
 from ordered_set import OrderedSet
 
 from .DateParser import date_parser
-from .YearParser import year_of_manufacturing_parser
 
 COLUMNS_SET = OrderedSet(['TIPUS', 'ANY_FABRICACIO', 'DATA_ALTA', 'DATA_BAIXA',
                           'MARCA', 'MODEL', 'CARBURANT', 'KW', 'CV', 'CO2', 'UNITATS_CO2',
@@ -29,6 +28,7 @@ def register_ingestor_function(path_registre_vehicles: str) -> pd.DataFrame:
         registre = pd.read_excel(path_registre_vehicles, header=0)
     except Exception as e:
         logger.error(f'Not able to read Registres Excel File: {path_registre_vehicles}', exc_info=True)
+        raise
 
     # Check Columns names
     if not COLUMNS_SET.issubset(set(registre.columns)):
@@ -65,10 +65,13 @@ def register_ingestor_function(path_registre_vehicles: str) -> pd.DataFrame:
     except KeyError:
         logger.warning(f"No s'ha trobat columna DATA_DARRERA_ITV5 al fitxer")
     try:
-        registre['ANY_FABRICACIO'] = registre['ANY_FABRICACIO'].apply(year_of_manufacturing_parser)
+        # If there is any empty cell pandas reads the column as decimal (ex: 2015.0), to_numeric handles both cases
+        registre['ANY_FABRICACIO'] = pd.to_numeric(registre['ANY_FABRICACIO'], errors='coerce').astype(pd.Int32Dtype())
+        number_of_empty_years = int(registre['ANY_FABRICACIO'].isna().sum())
+        if number_of_empty_years > 0:
+            logger.warning(f'Number of vehicles with no valid ANY_FABRICACIO: {number_of_empty_years}')
     except KeyError:
         logger.error("No s'ha trobat columna ANY_FABRICACIO", exc_info=True)
-
-    registre['ANY_FABRICACIO'] = registre['ANY_FABRICACIO'].astype(pd.Int32Dtype())
+        raise
 
     return registre

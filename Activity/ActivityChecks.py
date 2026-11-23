@@ -57,8 +57,7 @@ def calculate_activity_outliers_thresholds(categorized_vehicles_df: pd.DataFrame
         q1 = np.quantile(data, 0.25)
         q3 = np.quantile(data, 0.75)
         iqr = q3 - q1
-        lifetime_activity_outliers_per_category_mapping[category]['Max_Activity'] = q3 + 5 * iqr # 1.7 is equivalent to 3σ
-        # Assign minimum to 250 if value of minimum activity to be outlier is less than 250
+        lifetime_activity_outliers_per_category_mapping[category]['Max_Activity'] = q3 + 5 * iqr        # Assign minimum to 250 if value of minimum activity to be outlier is less than 250
         if (q1 - 1.5 * iqr) < 250:
             lifetime_activity_outliers_per_category_mapping[category]['Min_Activity'] = 250
         else:

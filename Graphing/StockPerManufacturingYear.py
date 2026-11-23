@@ -1,19 +1,26 @@
+import logging
+from pathlib import Path
+from typing import List
+
 import pandas as pd
 import plotly.express as px
-from typing import Dict, List
+import plotly.graph_objects as go
 
 from Classification import HYBRID_PHEV_TYPES
+from .Colors import CHART_CONFIG, FALLBACK_SEGMENTATION_COLORS, NO_SEGMENT_LABEL
 
-import logging
-logger = logging.getLogger('logger' + '.VehiclesCategory')
+logger = logging.getLogger('logger' + '.StockPerManufacturingYear')
 
-def figures_to_html(figs, filename="dashboard.html"):
-    dashboard = open(filename, 'w', encoding='utf-8')
-    dashboard.write("<html><head></head><body>" + "\n")
-    for fig in figs:
-        inner_html = fig.to_html().split('<body>')[1].split('</body>')[0]
-        dashboard.write(inner_html)
-    dashboard.write("</body></html>" + "\n")
+CHART_TITLE = 'Parc de vehicles actius per any de fabricació i tipologia'
+
+
+def figures_to_html(figs: List[go.Figure], filename="dashboard.html"):
+    """Save all the figures to one html file. The Plotly library is included only once, from the CDN"""
+    with open(filename, 'w', encoding='utf-8') as dashboard:
+        dashboard.write('<html><head><meta charset="utf-8"></head><body>\n')
+        for i, fig in enumerate(figs):
+            dashboard.write(fig.to_html(full_html=False, include_plotlyjs='cdn' if i == 0 else False))
+        dashboard.write("</body></html>\n")
 
 
 def categories_grouping(row):
@@ -26,13 +33,8 @@ def categories_grouping(row):
         else:
             return 'PHEV'
     else:
-        try:
-            result = row['Fuel'] + ' ' + row['Segment']
-            return result
-        except TypeError:
-            logger.info('Vehicle without a defined category')
-            logger.info(row.to_string())
-            return 'Sense categoria definida'
+        result = row['Fuel'] + ' ' + row['Segment']
+        return result
 
 
 def update_chart_layout(figure, title: str = None):
@@ -51,138 +53,66 @@ def update_chart_layout(figure, title: str = None):
 def add_annotation_to_chart(figure, data: pd.DataFrame, category: str):
     figure.add_annotation(
         x=data['ANY_FABRICACIO'].min() + (data['ANY_FABRICACIO'].max() - data['ANY_FABRICACIO'].min()) / 2,
-        y=data.groupby(['ANY_FABRICACIO']).sum(numeric_only=True)['Stock'].max() * 1.15,
+        y=data.groupby(['ANY_FABRICACIO'])['Stock'].sum().max() * 1.15,
         xanchor='center', yanchor='top',
         font={'size': 16}, text=category, showarrow=False)
 
 
-def create_chart_with_segmentation_and_colors_configuration(data: pd.DataFrame, category_orders: Dict, colors: List):
+def create_chart_with_segmentation_and_colors_configuration(data: pd.DataFrame, category: str) -> go.Figure:
+    """
+    Stacked bar chart of the stock per year of manufacturing. The order and the colors of the segmentation labels are
+    taken from CHART_CONFIG. Labels that are not in the configuration are added at the end with a fallback color.
+    """
+    configuration = CHART_CONFIG.get(category, [])
+    category_order = [label for label, _ in configuration]
+    colors = dict(configuration)
+
+    unconfigured_labels = [label for label in data['segmentation'].unique() if label not in colors]
+    for i, label in enumerate(unconfigured_labels):
+        logger.warning(f'Segmentation "{label}" of {category} is not in CHART_CONFIG, a fallback color is used')
+        category_order.append(label)
+        colors[label] = FALLBACK_SEGMENTATION_COLORS[i % len(FALLBACK_SEGMENTATION_COLORS)]
+
     fig = px.bar(data,
                  x='ANY_FABRICACIO', y='Stock', color="segmentation",
-                 category_orders=category_orders,
-                 color_discrete_sequence=colors
+                 category_orders={"segmentation": category_order},
+                 color_discrete_map=colors
                  )
     return fig
 
 
-def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df: pd.DataFrame, output_folder: str):
+def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df: pd.DataFrame, output_folder,
+                                                         show: bool = False) -> List[go.Figure]:
     """
     Save to and html file a bar chart representing the stock distribution per year of manufacturing, per segment and
-    per fuel type. One chart for each vehicle category
+    per fuel type. One chart for each vehicle category in CHART_CONFIG
     :param categorized_vehicles_df: Dataframe of the categorized vehicles registration list
     :param output_folder: output folder name where to store resulting chart
-    :return: an html file containing the 5 bar charts, one for each vehicle Category
+    :param show: if True, the figures are also opened in the browser (for local use)
+    :return: the list of figures, one for each vehicle Category. They are also saved in an html file
     """
-    # Passenger Cars chart:
-    data = categorized_vehicles_df[categorized_vehicles_df.Category == 'Passenger Cars'].groupby(
-        ['Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False).sum(numeric_only=True).reset_index()
-    data['segmentation'] = data.apply(lambda row: categories_grouping(row), axis=1)
+    figs = []
+    for category in CHART_CONFIG:
+        category_df = categorized_vehicles_df[categorized_vehicles_df.Category == category]
+        if category_df.empty:
+            logger.warning(f'No vehicles of Category {category}, its chart is not created')
+            continue
 
-    colors = ['rgb(0,68,27)', 'rgb(35,139,69)', 'rgb(199,233,192)',
-              'rgb(8,48,107)', 'rgb(33,113,181)', 'rgb(107,174,214)', 'rgb(198,219,239)', # Color for Diesel Mini
-              'rgb(127,39,4)', 'rgb(217,72,1)', 'rgb(253,141,60)', 'rgb(253,208,162)', 'rgb(171,171,171)' 
-              ]
-    category_orders = {"segmentation": ['Battery electric', 'PHEV', 'Hybrid',
-                                        'Diesel Large-SUV-Executive', 'Diesel Medium', 'Diesel Small',
-                                        'Diesel Mini',
-                                        'Petrol Large-SUV-Executive', 'Petrol Medium', 'Petrol Small',
-                                        'Petrol Mini', 'LPG Bi-fuel Small']
-                       }
+        data = category_df.groupby(['Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False).agg(
+            Stock=('Stock', 'sum')).reset_index()
+        data['Segment'] = data['Segment'].fillna(NO_SEGMENT_LABEL)
+        data['segmentation'] = data.apply(lambda row: categories_grouping(row), axis=1)
 
-    fig = create_chart_with_segmentation_and_colors_configuration(data, category_orders, colors)
-    update_chart_layout(fig, 'Parc de vehicles actius per any de fabricació i tipologia')
-    add_annotation_to_chart(fig, data, "Passenger Cars")
-    fig.show()
-
-    # Light Commercial Vehicles Chart
-    data = categorized_vehicles_df[categorized_vehicles_df.Category == 'Light Commercial Vehicles'].groupby(
-        ['Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False).sum(numeric_only=True).reset_index()
-    data['segmentation'] = data.apply(lambda row: categories_grouping(row), axis=1)
-
-    colors = ['rgb(0,68,27)',
-              'rgb(8,48,107)', 'rgb(33,113,181)', 'rgb(107,174,214)',
-              'rgb(127,39,4)', 'rgb(217,72,1)', 'rgb(253,141,60)', 'rgb(199,233,192)', 'rgb(247,252,245)'
-              ]
-    category_orders = {"segmentation": ['Battery electric', 'Diesel N1-I', 'Diesel N1-II',
-                                        'Diesel N1-III', 'Petrol N1-I', 'Petrol N1-II', 'Petrol N1-III',
-                                        'Hybrid']
-                       }
-    fig2 = create_chart_with_segmentation_and_colors_configuration(data, category_orders, colors)
-    update_chart_layout(fig2)
-    add_annotation_to_chart(fig2, data, "Light Commercial Vehicles")
-    fig2.show()
-
-    # Heavy Duty Trucks
-    data = categorized_vehicles_df[categorized_vehicles_df.Category == 'Heavy Duty Trucks'].groupby(
-        ['Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False).sum(numeric_only=True).reset_index()
-    data['segmentation'] = data.apply(lambda row: categories_grouping(row), axis=1)
-
-    colors = [
-        'rgb(8,48,107)', 'rgb(8,81,156)', 'rgb(33,113,181)', 'rgb(66,146,198)', 'rgb(107,174,214)', 'rgb(158,202,225)',
-        'rgb(198,219,239)', 'rgb(199,233,192)',
-        'rgb(222,235,247)', 'rgb(247,251,255)'
-    ]
-    category_orders = {"segmentation": ['Diesel Rigid <=7,5 t',
-                                        'Diesel Rigid 7,5 - 12 t',
-                                        'Diesel Rigid 12 - 14 t',
-                                        'Diesel Rigid 14 - 20 t',
-                                        'Diesel Rigid 20 - 26 t',
-                                        'Diesel Rigid 26 - 28 t',
-                                        'Diesel Rigid 28 - 32 t',
-                                        'Hybrid']
-                       }
-    fig3 = create_chart_with_segmentation_and_colors_configuration(data, category_orders, colors)
-    update_chart_layout(fig3)
-    add_annotation_to_chart(fig3, data, "Heavy Duty Trucks")
-    fig3.show()
-
-    # Buses
-    data = categorized_vehicles_df[categorized_vehicles_df.Category == 'Buses'].groupby(
-        ['Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False).sum(numeric_only=True).reset_index()
-    data['segmentation'] = data.apply(lambda row: categories_grouping(row), axis=1)
-
-    colors = [
-        'rgb(8,48,107)', 'rgb(33,113,181)', 'rgb(107,174,214)', 'rgb(199,233,192)',
-        'rgb(247,251,255)', 'rgb(222,235,247)', 'rgb(198,219,239)', 'rgb(158,202,225)'
-    ]
-    category_orders = {"segmentation": ['Diesel Urban Buses Midi <=15 t',
-                                        'Diesel Urban Buses Standard 15 - 18 t',
-                                        'Diesel Urban Buses Articulated >18 t',
-                                        'Hybrid']
-                       }
-    fig4 = create_chart_with_segmentation_and_colors_configuration(data, category_orders, colors)
-    update_chart_layout(fig4)
-    add_annotation_to_chart(fig4, data, "Buses")
-    fig4.show()
-
-    # L-Category
-    data = categorized_vehicles_df[categorized_vehicles_df.Category == 'L-Category'].groupby(
-        ['Fuel', 'Segment', 'ANY_FABRICACIO'], dropna=False).sum(numeric_only=True).reset_index()
-    data['segmentation'] = data.apply(lambda row: categories_grouping(row), axis=1)
-
-    colors = ['rgb(0,68,27)',  # electric
-              # Petrol
-              'rgb(127,39,4)',
-              'rgb(217,72,1)',
-              'rgb(253,141,60)',
-              'rgb(253,208,162)',
-              # Diesel
-              'rgb(107,174,214)', 'rgb(203,24,29)', 'rgb(165,15,21)', 'rgb(103,0,13)'
-              ]
-    category_orders = {"segmentation": ['Battery electric',
-                                        'Petrol Mopeds 2-stroke <50 cm³',
-                                        'Petrol Motorcycles 4-stroke <250 cm³',
-                                        'Petrol Motorcycles 4-stroke 250 - 750 cm³',
-                                        'Petrol Motorcycles 4-stroke >750 cm³',
-                                        'Diesel Motorcycles 4-stroke >750 cm³']
-                       }
-    fig5 = create_chart_with_segmentation_and_colors_configuration(data, category_orders, colors)
-    update_chart_layout(fig5)
-    add_annotation_to_chart(fig5, data, "L-Category")
-    fig5.show()
+        fig = create_chart_with_segmentation_and_colors_configuration(data, category)
+        update_chart_layout(fig, CHART_TITLE if not figs else None)
+        add_annotation_to_chart(fig, data, category)
+        figs.append(fig)
 
     # Save figures to html file
-    figs = [fig, fig2, fig3, fig4, fig5]
-    filename = output_folder + "Parc de vehicles actius per any de fabricació i tipologia.html"
+    filename = Path(output_folder) / "Parc de vehicles actius per any de fabricació i tipologia.html"
     figures_to_html(figs, filename)
 
+    if show:
+        for fig in figs:
+            fig.show()
+    return figs

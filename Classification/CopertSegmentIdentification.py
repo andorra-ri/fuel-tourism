@@ -60,7 +60,7 @@ def segment_identification_for_each_category(row: pd.Series) -> str:
             elif 28000 <= row['PES_BUIT'] <= 32000:
                 return 'Rigid 28 - 32 t'
             elif row['PES_BUIT'] > 32000:
-                return 'Rigid >32 t '
+                return 'Rigid >32 t'
             else:
                 return None
 

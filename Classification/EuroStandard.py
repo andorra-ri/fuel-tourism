@@ -39,15 +39,15 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
             if row['Fuel'] == 'Diesel':
                 return 'Conventional'
             return 'ECE 15/00-01'
-        elif 1978 < row['ANY_FABRICACIO'] < 1981:
+        elif 1978 <= row['ANY_FABRICACIO'] < 1981:
             if row['Fuel'] == 'Diesel':
                 return 'Conventional'
             return 'ECE 15/02'
-        elif 1981 < row['ANY_FABRICACIO'] < 1985:
+        elif 1981 <= row['ANY_FABRICACIO'] < 1985:
             if row['Fuel'] == 'Diesel':
                 return 'Conventional'
             return 'ECE 15/03'
-        elif 1985 < row['ANY_FABRICACIO'] < 1993:
+        elif 1985 <= row['ANY_FABRICACIO'] < 1993:
             if row['Fuel'] == 'Diesel':
                 return 'Conventional'
             return 'ECE 15/04'

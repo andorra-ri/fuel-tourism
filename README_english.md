@@ -6,7 +6,7 @@ Dependencies to read Excel files: ``pip install xlrd`` and ``pip install openpyx
 
 ## Activity
 The function ``mean_activity_calculator_by_grouping`` calculates the Mean Activity for the vehicle partition types:
-Category, Fuel, Segment and Euro Standard that do not have enough units by itself(minimum number 100 by default), 
+Category, Fuel, Segment and Euro Standard that do not have enough units by itself(minimum number 50 by default), 
 by grouping by different partitions until one of them has enough vehicles in the grouping.
 The assigment of Mean activity is done following the next order of groupings, and returns the Mean Activity if the minimum COUNT is reach, otherwise returns nan
 It takes the following data by order:
