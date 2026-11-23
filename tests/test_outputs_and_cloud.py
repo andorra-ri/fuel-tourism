@@ -8,7 +8,7 @@ import pytest
 from cloud import schema, upload
 from exports.leap import build_leap_electricity_table, electric_motorcycles_energy_tj, write_leap_excel
 from pipeline.paths import OutputPaths
-from DataCleaning.TypeConvertion import convert_to_integer_df_columns
+from data_cleaning.type_conversion import convert_to_integer_df_columns
 
 
 def make_settings(tmp_path):

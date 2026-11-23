@@ -5,7 +5,7 @@ import logging
 
 from .AggregationFunctions import groupby_partitions, filter_groupby_partitions
 from .ActivityChecks import check_for_activity_outliers
-from Classification.MappingConstants import CATEGORIES, HYBRID_PHEV_TYPES
+from classification.MappingConstants import CATEGORIES, HYBRID_PHEV_TYPES
 
 info_logger = logging.getLogger('info_logger' + '.MeanActivityCalculator')
 logger = logging.getLogger('logger' + '.MeanActivityCalculator')

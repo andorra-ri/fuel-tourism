@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 
-from Classification import CATEGORIES
+from classification import CATEGORIES
 from .Colors import NO_EURO_LABEL
 
 

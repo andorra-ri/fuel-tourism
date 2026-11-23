@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from Classification import HYBRID_PHEV_TYPES
+from classification import HYBRID_PHEV_TYPES
 from .Colors import CHART_CONFIG, FALLBACK_SEGMENTATION_COLORS, NO_SEGMENT_LABEL
 
 logger = logging.getLogger('logger' + '.StockPerManufacturingYear')

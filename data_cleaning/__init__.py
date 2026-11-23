@@ -7,6 +7,6 @@ from .Filters import (
     filter_by_partitions,
     filter_fleet_stock_at_reference_date
 )
-from .TypeConvertion import convert_to_integer_df_columns
+from .type_conversion import convert_to_integer_df_columns
 from .Info import print_info, save_to_csv_vehicles_with_erroneous_data
 

@@ -2,7 +2,7 @@ import logging
 
 import pandas as pd
 
-logger = logging.getLogger('logger' + '.TypeConvertion')
+logger = logging.getLogger('logger' + '.type_conversion')
 
 ACTIVITY_STATISTICS_COLUMNS = ['Mean_Activity', 'Min_Activity', 'Max_Activity', 'Std_Activity', 'Mean_Lifetime_Activity']
 

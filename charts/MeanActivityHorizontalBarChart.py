@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 from .Colors import COLOR_DISCRETE_MAP
-from Classification import CATEGORIES
+from classification import CATEGORIES
 
 
 def all_categories_grouping(row: pd.Series) -> str:

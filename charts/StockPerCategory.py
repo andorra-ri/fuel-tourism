@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from Graphing.Colors import COLOR_DISCRETE_MAP
+from charts.Colors import COLOR_DISCRETE_MAP
 
 
 def stock_per_category_pie_chart(stock_activity_df: pd.DataFrame, output_file, show: bool = False) -> go.Figure:

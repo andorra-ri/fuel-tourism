@@ -2,15 +2,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from Classification.EuroStandard import euro_standard_identification_by_year_of_manufacturing as euro
-from Classification.MappingFunctions import check_unmapped_values, category_mapper_itv_copert, fuel_mapper_itv_copert
-from Classification.ReClassification import (
+from classification.EuroStandard import euro_standard_identification_by_year_of_manufacturing as euro
+from classification.MappingFunctions import check_unmapped_values, category_mapper_itv_copert, fuel_mapper_itv_copert
+from classification.ReClassification import (
     reclassification_light_commercial_to_heavy_duty_trucks,
     reclassification_heavy_duty_trucks_to_light_commercial_vehicles,
     reclassification_trial_bikes_to_off_road
 )
-from Classification.SegmentRedistribution import fill_nan_with_frequency
-from Classification.ClassificationWrapper import passenger_cars_cc_out_of_range_mask
+from classification.SegmentRedistribution import fill_nan_with_frequency
+from classification.ClassificationWrapper import passenger_cars_cc_out_of_range_mask
 
 
 def test_segment_is_filled_with_the_distribution_of_its_own_category():

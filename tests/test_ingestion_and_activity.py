@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from Activity.ActivityCalculator import activity_time_and_km_between_itv_revisions as activity
-from Ingestion.DateParser import date_parser
-from Ingestion.YearParser import year_of_manufacturing_parser
+from activity.ActivityCalculator import activity_time_and_km_between_itv_revisions as activity
+from ingestion.DateParser import date_parser
+from ingestion.YearParser import year_of_manufacturing_parser
 
 MAX_DATE = datetime(2025, 12, 31)
 

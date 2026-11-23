@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from Graphing import (
+from charts import (
     euro_distribution_pie_charts,
     stock_per_category_pie_chart,
     stock_per_manufacturing_year_and_category_bar_charts,

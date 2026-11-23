@@ -1,0 +1,1 @@
+from ingestion.register_ingestor import register_ingestor_function

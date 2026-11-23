@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Dict, Tuple
 import logging
 
-from Classification.MappingConstants import CATEGORIES
+from classification.MappingConstants import CATEGORIES
 
 info_logger = logging.getLogger('info_logger' + '.ActivityChecks')
 logger = logging.getLogger('logger' + '.ActivityChecks')

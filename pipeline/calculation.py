@@ -12,23 +12,23 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from Activity import (
+from activity import (
     activity_time_and_km_between_itv_revisions,
     check_for_activity_outliers,
     calculate_activity_outliers_thresholds,
     activity_stats_calculator_by_grouping
 )
-from Classification import (
+from classification import (
     category_fuel_segment_euro_classification_wrapper_function,
     MAPPING_CATEGORY_LAST_EURO_STANDARD
 )
-from DataCleaning import (
+from data_cleaning import (
     filter_fleet_stock_at_reference_date,
     convert_to_integer_df_columns,
     print_info,
     save_to_csv_vehicles_with_erroneous_data
 )
-from Ingestion import register_ingestor_function
+from ingestion import register_ingestor_function
 from pipeline.paths import OutputPaths
 
 logger = logging.getLogger('logger' + '.calculation')

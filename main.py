@@ -12,7 +12,7 @@ Stages: calculate -> charts -> export -> upload (all = calculate + charts)
 import argparse
 import logging
 
-from Logger import setup_logger
+from logger import setup_logger
 from pipeline import load_settings, OutputPaths
 
 STAGES = ['all', 'calculate', 'charts', 'export', 'upload']

@@ -1,7 +1,7 @@
 import logging
 import pandas as pd
 
-from Classification import CATEGORIES
+from classification import CATEGORIES
 
 info_logger = logging.getLogger('info_logger' + '.ActivityCalculator')
 
