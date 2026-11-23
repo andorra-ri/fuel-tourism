@@ -1,10 +1,21 @@
 from datetime import timedelta
 import numpy as np
 import pandas as pd
-from typing import Dict
+from typing import Dict, Tuple
 import logging
 
+from Classification.MappingConstants import CATEGORIES
+
 info_logger = logging.getLogger('info_logger' + '.ActivityChecks')
+logger = logging.getLogger('logger' + '.ActivityChecks')
+
+# Categories whose activity (km/year) outliers thresholds are calculated
+CATEGORIES_WITH_ACTIVITY = [category for category in CATEGORIES if category != 'Off Road']
+
+# Default values of the outliers thresholds (can be changed in the settings file)
+IQR_MAX_FACTOR = 5          # Maximum activity: Q3 + IQR_MAX_FACTOR * IQR
+IQR_MIN_FACTOR = 1.5        # Minimum activity: Q1 - IQR_MIN_FACTOR * IQR
+MIN_ACTIVITY_FLOOR = 250    # Minimum activity (km/year) below which a vehicle is an outlier, whatever the IQR is
 
 
 def check_if_timedelta_greater_than_minimum_days(time_difference: timedelta, min_days: int) -> bool:
@@ -15,53 +26,42 @@ def check_if_timedelta_greater_than_minimum_days(time_difference: timedelta, min
         return False
 
 
-def calculate_activity_outliers_thresholds(categorized_vehicles_df: pd.DataFrame) -> Dict:
-    """Calculates outliers with the IQR method for each category and returns a dictionary with the min and max values"""
+def activity_thresholds(values: pd.Series, iqr_max_factor: float, iqr_min_factor: float,
+                        min_activity_floor: float) -> Tuple[float, float]:
+    """Minimum and maximum activity to not be considered an outlier, with the IQR method"""
+    q1 = np.quantile(values, 0.25)
+    q3 = np.quantile(values, 0.75)
+    iqr = q3 - q1
+    return max(q1 - iqr_min_factor * iqr, min_activity_floor), q3 + iqr_max_factor * iqr
 
-    CATEGORIES = ['Passenger Cars', 'Light Commercial Vehicles', 'Heavy Duty Trucks',
-                  'Buses', 'L-Category']
-    activity_outliers_per_category_mapping = {
-        'Passenger Cars': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Light Commercial Vehicles': {'Min_Activity': 0, 'Max_Activity': 0},
-        'L-Category': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Heavy Duty Trucks': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Buses': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Off Road': {'Min_Activity': 0, 'Max_Activity': 0}
-    }
-    lifetime_activity_outliers_per_category_mapping = {
-        'Passenger Cars': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Light Commercial Vehicles': {'Min_Activity': 0, 'Max_Activity': 0},
-        'L-Category': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Heavy Duty Trucks': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Buses': {'Min_Activity': 0, 'Max_Activity': 0},
-        'Off Road': {'Min_Activity': 0, 'Max_Activity': 0}
-    }
 
-    for category in CATEGORIES:
-        data = categorized_vehicles_df[(categorized_vehicles_df['Category'] == category) &
-                                       (categorized_vehicles_df['Activity'].notna())]['Activity']
-        # calculate activity outliers
-        q1 = np.quantile(data, 0.25)
-        q3 = np.quantile(data, 0.75)
-        iqr = q3 - q1
-        activity_outliers_per_category_mapping[category]['Max_Activity'] = q3 + 5 * iqr
-        # Assign minimum to 250 if value of minimum activity to be outlier is less than 250
-        if (q1 - 1.5 * iqr) < 250:
-            activity_outliers_per_category_mapping[category]['Min_Activity'] = 250
-        else:
-            activity_outliers_per_category_mapping[category]['Min_Activity'] = q1 - 1.5 * iqr
+def calculate_activity_outliers_thresholds(categorized_vehicles_df: pd.DataFrame,
+                                           iqr_max_factor: float = IQR_MAX_FACTOR,
+                                           iqr_min_factor: float = IQR_MIN_FACTOR,
+                                           min_activity_floor: float = MIN_ACTIVITY_FLOOR) -> Tuple[Dict, Dict]:
+    """
+    Calculates outliers with the IQR method for each category and returns a dictionary with the min and max values,
+    for the Activity and for the Lifetime Activity.
+    """
+    activity_outliers_per_category_mapping = {category: {'Min_Activity': 0, 'Max_Activity': 0}
+                                              for category in CATEGORIES}
+    lifetime_activity_outliers_per_category_mapping = {category: {'Min_Activity': 0, 'Max_Activity': 0}
+                                                       for category in CATEGORIES}
 
-        # calculate lifetime activity outliers
-        data = categorized_vehicles_df[(categorized_vehicles_df['Category'] == category) &
-                                       (categorized_vehicles_df['Lifetime Activity'].notna())]['Lifetime Activity']
-        q1 = np.quantile(data, 0.25)
-        q3 = np.quantile(data, 0.75)
-        iqr = q3 - q1
-        lifetime_activity_outliers_per_category_mapping[category]['Max_Activity'] = q3 + 5 * iqr        # Assign minimum to 250 if value of minimum activity to be outlier is less than 250
-        if (q1 - 1.5 * iqr) < 250:
-            lifetime_activity_outliers_per_category_mapping[category]['Min_Activity'] = 250
-        else:
-            lifetime_activity_outliers_per_category_mapping[category]['Min_Activity'] = q1 - 1.5 * iqr
+    for category in CATEGORIES_WITH_ACTIVITY:
+        category_df = categorized_vehicles_df[categorized_vehicles_df['Category'] == category]
+        for column, mapping in (('Activity', activity_outliers_per_category_mapping),
+                                ('Lifetime Activity', lifetime_activity_outliers_per_category_mapping)):
+            data = category_df[column].dropna()
+            if data.empty:
+                logger.warning(f'No {column} values for Category {category}, outliers thresholds not calculated')
+                # No outlier is detected in a category without data
+                mapping[category] = {'Min_Activity': -np.inf, 'Max_Activity': np.inf}
+                continue
+            min_threshold, max_threshold = activity_thresholds(data, iqr_max_factor, iqr_min_factor,
+                                                               min_activity_floor)
+            mapping[category]['Max_Activity'] = max_threshold
+            mapping[category]['Min_Activity'] = min_threshold
 
     info_logger.info(f'Activity outliers per Category: ')
     info_logger.info((activity_outliers_per_category_mapping))

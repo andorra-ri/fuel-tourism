@@ -24,19 +24,20 @@ FUEL_MAPPING_DICT = {       # De moment no hi han vehicles amb Gas Natural, si a
     'HIBRID GASOLINA ENDOLLABLE': 'Petrol PHEV',
     'HIB.GASOLINA ENDOLLABLE': 'Petrol PHEV',
     'ELEC. AUTO. ESTESA': 'Battery electric',  # Només hi ha el BMW I3 amb aquest carburant (elec)
-    'GASOLINA-GPL': 'LPG Bi-fuel'
+    'GASOLINA-GPL': 'LPG Bi-fuel',
+    'GASOLINA-GLP': 'LPG Bi-fuel'  # Same fuel, spelled GLP in the Excel of 2026
 }
 
 MAPPING_CATEGORY_LAST_EURO_STANDARD = {
     'Passenger Cars': {
-        'last_euro': 'Euro 6 d-temp',
-        'second_last_euro': 'Euro 6 a/b/c',
-        'third_last_euro': 'Euro 5'
+        'last_euro': 'Euro 6 d/e',
+        'second_last_euro': 'Euro 6 d-temp',
+        'third_last_euro': 'Euro 6 a/b/c'
                        },
     'Light Commercial Vehicles': {
-            'last_euro': 'Euro 6 d-temp',
-            'second_last_euro': 'Euro 6 a/b/c',
-            'third_last_euro': 'Euro 5'
+            'last_euro': 'Euro 6 d/e',
+            'second_last_euro': 'Euro 6 d-temp',
+            'third_last_euro': 'Euro 6 a/b/c'
                            },
     'L-Category': {
         'last_euro': 'Euro 5',

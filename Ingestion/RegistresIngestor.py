@@ -30,10 +30,15 @@ def register_ingestor_function(path_registre_vehicles: str) -> pd.DataFrame:
         logger.error(f'Not able to read Registres Excel File: {path_registre_vehicles}', exc_info=True)
         raise
 
-    # Check Columns names
-    if not COLUMNS_SET.issubset(set(registre.columns)):
-        logger.warning(f'Nom de columnes diferents, pot donar problemes. Fitxer: {path_registre_vehicles}')
-        logger.info(f'Columnes mínimes esperades: {COLUMNS_SET}')
+    # Check Columns names: the missing ones stop the execution, the new ones are only reported
+    missing_columns = [column for column in COLUMNS_SET if column not in registre.columns]
+    new_columns = [column for column in registre.columns if column not in COLUMNS_SET]
+    if new_columns:
+        logger.info(f'Columnes noves al fitxer {path_registre_vehicles}: {new_columns}')
+    if missing_columns:
+        message = f'Falten columnes obligatories al fitxer {path_registre_vehicles}: {missing_columns}'
+        logger.error(message)
+        raise ValueError(message)
 
     # Parsing of date columns
     try:

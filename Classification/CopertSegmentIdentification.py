@@ -18,7 +18,7 @@ def segment_identification_for_each_category(row: pd.Series) -> str:
     if row['Fuel'] in NON_ELECTRIC_FUEL_TYPES:
         # Segment classification of Passenger Cars Category
         if row['Category'] == 'Passenger Cars':
-            if 560 < row['CC_CM3'] < 800:
+            if 560 <= row['CC_CM3'] < 800:
                 # Acording to Copert there is no Petrol PHEV or Diesel Mini, assigned to small
                 if row['Fuel'] != 'Petrol':
                     return 'Small'

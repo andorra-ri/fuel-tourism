@@ -18,13 +18,13 @@ def all_categories_grouping(row: pd.Series) -> str:
     return result
 
 
-def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame, output_folder, show: bool = False
+def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame, output_file, show: bool = False
                                   ) -> go.Figure:
     """
     Horizontal bar chart representing mean activity and other activities per unique categorization
 
     :param stock_and_mileage_df: Dataframe of the  vehicles registration list
-    :param output_folder: output folder name where to store resulting chart
+    :param output_file: path of the html file where to store the resulting chart
     :param show: if True, the figure is also opened in the browser (for local use)
     :return: the figure. It is also saved in an html file containing the horizontal bar chart of the mean activity
     """
@@ -90,8 +90,7 @@ def activity_horizontal_bar_chart(stock_and_mileage_df: pd.DataFrame, output_fol
     horizontal_plot.update_xaxes(showgrid=True, zeroline=True)
 
     # Save plot to html file
-    filename = Path(output_folder) / "Activitat mitjana anual segons classificació del parc de vehicles d'Andorra.html"
-    horizontal_plot.write_html(filename)
+    horizontal_plot.write_html(Path(output_file))
     if show:
         horizontal_plot.show()
     return horizontal_plot

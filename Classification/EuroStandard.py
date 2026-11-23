@@ -105,7 +105,7 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
                     return 'Euro 4'
                 elif 2012 <= row['ANY_FABRICACIO'] < 2017:
                     return 'Euro 5'
-                elif 2016 <= row['ANY_FABRICACIO'] < 2021:
+                elif 2017 <= row['ANY_FABRICACIO'] < 2020:
                     return 'Euro 6 a/b/c'
                 elif 2020 <= row['ANY_FABRICACIO'] < 2022:
                     return 'Euro 6 d-temp'
@@ -124,7 +124,7 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
                     return 'Euro 4'
                 elif 2012 <= row['ANY_FABRICACIO'] < 2017:
                     return 'Euro 5'
-                elif 2016 <= row['ANY_FABRICACIO'] < 2021:
+                elif 2017 <= row['ANY_FABRICACIO'] < 2020:
                     return 'Euro 6 a/b/c'
                 elif 2020 <= row['ANY_FABRICACIO'] < 2021:
                     return 'Euro 6 d-temp'

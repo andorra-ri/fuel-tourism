@@ -8,24 +8,44 @@ from .ReClassification import (
     reclassification_heavy_duty_trucks_to_light_commercial_vehicles,
     reclassification_trial_bikes_to_off_road
                                )
-from .MappingFunctions import category_mapper_itv_copert, fuel_mapper_itv_copert
+from .MappingFunctions import category_mapper_itv_copert, fuel_mapper_itv_copert, check_unmapped_values
 from .SegmentRedistribution import fill_nan_with_frequency
 from .MappingConstants import NON_ELECTRIC_FUEL_TYPES, ELECTRIC_TYPES, HYBRID_PHEV_TYPES
 
 logger = logging.getLogger('logger' + '.ClassificationWrapper')
 
 
+# Passenger cars with an engine displacement out of this range (cm3) are discarded
+MIN_PASSENGER_CAR_CC = 560
+MAX_PASSENGER_CAR_CC = 8500
+
+
+def passenger_cars_cc_out_of_range_mask(df: pd.DataFrame) -> pd.Series:
+    """Mask of the non electric Passenger Cars with a known engine displacement out of the accepted range"""
+    return ((df['Category'] == 'Passenger Cars') & df['Fuel'].isin(NON_ELECTRIC_FUEL_TYPES) &
+            ((df['CC_CM3'] < MIN_PASSENGER_CAR_CC) | (df['CC_CM3'] > MAX_PASSENGER_CAR_CC)))
+
+
 def category_fuel_segment_euro_classification_wrapper_function(register_df: pd.DataFrame,
-                                                              random_seed: int = 42) -> pd.DataFrame:
+                                                              random_seed: int = 42,
+                                                              return_discarded: bool = False):
     """
-    Return the input itv register df with the columns Category, Fuel, Segment, Euro Standard for each vehicle(row)
+    Return the input itv register df with the columns Category, Fuel, Segment, Euro Standard for each vehicle(row).
+    Non electric Passenger Cars with an engine displacement out of the range 560-8500 cm3 are discarded. Those without
+    displacement data are kept and their Segment is assigned by the distribution of the Passenger Cars.
 
     :param register_df: itv register dataframe
     :param random_seed: seed used to assign Segment to vehicles with erroneous data, so results are reproducible
+    :param return_discarded: if True returns a tuple (classified df, discarded vehicles df)
     """
     logger.info('Starting Vehicle Classification')
     df = category_mapper_itv_copert(register_df)
     df = fuel_mapper_itv_copert(df)
+    check_unmapped_values(df)
+    out_of_range = passenger_cars_cc_out_of_range_mask(df)
+    discarded_df = df[out_of_range].copy()
+    logger.info(f'Passenger Cars discarded for having an engine displacement out of range: {discarded_df.shape[0]}')
+    df = df[~out_of_range].copy()
     df = reclassification_light_commercial_to_heavy_duty_trucks(df)
     df = reclassification_heavy_duty_trucks_to_light_commercial_vehicles(df)
     df = reclassification_trial_bikes_to_off_road((df))
@@ -75,4 +95,6 @@ def category_fuel_segment_euro_classification_wrapper_function(register_df: pd.D
     df.loc[(df['Category'] == 'Passenger Cars') &
            (df['Fuel'] == 'Diesel PHEV'), 'Segment'] = 'Large-SUV-Executive'
 
+    if return_discarded:
+        return df, discarded_df
     return df

@@ -8,14 +8,14 @@ from Classification import CATEGORIES
 from .Colors import NO_EURO_LABEL
 
 
-def euro_distribution_pie_charts(categorized_vehicles_df: pd.DataFrame, output_folder, show: bool = False
+def euro_distribution_pie_charts(stock_activity_df: pd.DataFrame, output_file, show: bool = False
                                  ) -> go.Figure:
     """
     Figure containing the Euro distribution pie chart for every Category. Vehicles with no Euro Standard
     (ex: electric vehicles) are shown with the label "Sin Euro"
 
-    :param categorized_vehicles_df: Dataframe of the categorized vehicles registration list
-    :param output_folder: output folder name where to store resulting chart
+    :param stock_activity_df: aggregated table of the stock, with the columns Category, Euro Standard and Stock
+    :param output_file: path of the html file where to store the resulting chart
     :param show: if True, the figure is also opened in the browser (for local use)
     :return: the figure. It is also saved in an html file containing the EURO distribution pie charts per each Category
     """
@@ -29,8 +29,8 @@ def euro_distribution_pie_charts(categorized_vehicles_df: pd.DataFrame, output_f
     # Creation of each subplot, one per category
     for i, category in enumerate(CATEGORIES):
         col = 2 if i % 2 == 1 else 1
-        df = categorized_vehicles_df[categorized_vehicles_df['Category'] == category]
-        data = df.groupby(['Euro Standard'], dropna=False).size().reset_index(name='Stock')
+        df = stock_activity_df[stock_activity_df['Category'] == category]
+        data = df.groupby(['Euro Standard'], dropna=False, as_index=False).agg(Stock=('Stock', 'sum'))
         data['Euro Standard'] = data['Euro Standard'].fillna(NO_EURO_LABEL)
         legend_group = 'group2' if i == 2 or i == 3 else 'group1'
         pie_charts.add_trace(go.Pie(
@@ -49,8 +49,7 @@ def euro_distribution_pie_charts(categorized_vehicles_df: pd.DataFrame, output_f
         legend={'traceorder': 'grouped'}
     )
 
-    filename = Path(output_folder) / "Distribució Euro per categoria.html"
-    pie_charts.write_html(filename)
+    pie_charts.write_html(Path(output_file))
     if show:
         pie_charts.show()
     return pie_charts

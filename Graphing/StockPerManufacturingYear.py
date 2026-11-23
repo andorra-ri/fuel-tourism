@@ -81,19 +81,20 @@ def create_chart_with_segmentation_and_colors_configuration(data: pd.DataFrame, 
     return fig
 
 
-def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df: pd.DataFrame, output_folder,
+def stock_per_manufacturing_year_and_category_bar_charts(stock_by_manufacturing_year_df: pd.DataFrame, output_file,
                                                          show: bool = False) -> List[go.Figure]:
     """
     Save to and html file a bar chart representing the stock distribution per year of manufacturing, per segment and
     per fuel type. One chart for each vehicle category in CHART_CONFIG
-    :param categorized_vehicles_df: Dataframe of the categorized vehicles registration list
-    :param output_folder: output folder name where to store resulting chart
+    :param stock_by_manufacturing_year_df: aggregated table of the stock per year of manufacturing, with the columns
+        Category, Fuel, Segment, ANY_FABRICACIO and Stock
+    :param output_file: path of the html file where to store the resulting charts
     :param show: if True, the figures are also opened in the browser (for local use)
     :return: the list of figures, one for each vehicle Category. They are also saved in an html file
     """
     figs = []
     for category in CHART_CONFIG:
-        category_df = categorized_vehicles_df[categorized_vehicles_df.Category == category]
+        category_df = stock_by_manufacturing_year_df[stock_by_manufacturing_year_df.Category == category]
         if category_df.empty:
             logger.warning(f'No vehicles of Category {category}, its chart is not created')
             continue
@@ -109,8 +110,7 @@ def stock_per_manufacturing_year_and_category_bar_charts(categorized_vehicles_df
         figs.append(fig)
 
     # Save figures to html file
-    filename = Path(output_folder) / "Parc de vehicles actius per any de fabricació i tipologia.html"
-    figures_to_html(figs, filename)
+    figures_to_html(figs, Path(output_file))
 
     if show:
         for fig in figs:

@@ -24,7 +24,9 @@ def date_parser(date: int):
     except ValueError:
         try:
             # Some dates only have a valid year
-            return datetime.strptime(date[:4], '%Y')
+            result = datetime.strptime(date[:4], '%Y')
+            logger.warning(f'Date {date} is not valid, only its year is used')
+            return result
         except ValueError:
             logger.error(f'Unable to parse date {date}, with function date_parser')
             return pd.NaT

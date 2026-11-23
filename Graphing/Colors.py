@@ -38,6 +38,10 @@ CHART_CONFIG = {
         ('Petrol N1-I', 'rgb(127,39,4)'),
         ('Petrol N1-II', 'rgb(217,72,1)'),
         ('Petrol N1-III', 'rgb(253,141,60)'),
+        ('LPG Bi-fuel N1-I', 'rgb(171,171,171)'),
+        ('LPG Bi-fuel N1-II', 'rgb(135,135,135)'),
+        ('LPG Bi-fuel N1-III', 'rgb(99,99,99)'),
+        ('PHEV', 'rgb(35,139,69)'),
         ('Hybrid', 'rgb(199,233,192)'),
     ],
     "Heavy Duty Trucks": [
@@ -49,6 +53,9 @@ CHART_CONFIG = {
         ('Diesel Rigid 26 - 28 t', 'rgb(158,202,225)'),
         ('Diesel Rigid 28 - 32 t', 'rgb(198,219,239)'),
         ('Diesel Rigid >32 t', 'rgb(222,235,247)'),
+        ('Petrol Rigid <=7,5 t', 'rgb(127,39,4)'),
+        ('Petrol Rigid 7,5 - 12 t', 'rgb(217,72,1)'),
+        ('LPG Bi-fuel Rigid <=7,5 t', 'rgb(171,171,171)'),
         ('Hybrid', 'rgb(199,233,192)'),
     ],
     "Buses": [

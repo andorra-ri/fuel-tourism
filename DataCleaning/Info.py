@@ -1,6 +1,4 @@
 import logging
-from pathlib import Path
-
 import pandas as pd
 
 from Classification import CATEGORIES
@@ -18,21 +16,22 @@ def print_info(register_df: pd.DataFrame):
     pass
 
 
-def save_to_csv_vehicles_with_erroneous_data(register_df: pd.DataFrame, output_folder,
-                                             activity_outliers_per_category_mapping,
-                                             lifetime_activity_outliers_per_category_mapping):
-    """ Save to csv files erroneous data"""
-    output_folder = Path(output_folder)
+def save_to_csv_vehicles_with_erroneous_data(register_df: pd.DataFrame, paths,
+                                             activity_outliers_per_category_mapping: dict,
+                                             discarded_passenger_cars_df: pd.DataFrame = None):
+    """
+    Save to csv files (quality assurance tables) the vehicles with erroneous data.
 
-    df1 = register_df[(register_df['Category'] == 'Passenger Cars') &
-                      ((register_df['CC_CM3'] < 560) | (register_df['CC_CM3'] > 8500))]
-    df1.to_csv(output_folder / 'turismes_amb_dades_cilindrada_erronies.csv', index=False)
-
-    df2 = register_df[(register_df['Category'] == 'Buses') & (register_df['PES_BUIT'] > 18000)]
-    df2.to_csv(output_folder / 'busos_amb_dades_pes_buit_erronies.csv', index=False)
+    :param register_df: classified vehicles dataframe, with the activity calculated
+    :param paths: OutputPaths of the study
+    :param activity_outliers_per_category_mapping: max activity (km/year) accepted for each Category
+    :param discarded_passenger_cars_df: Passenger Cars discarded for having the engine displacement out of range
+    """
+    if discarded_passenger_cars_df is not None:
+        discarded_passenger_cars_df.to_csv(paths.qa_passenger_cars_cc_out_of_range, index=False)
 
     df3 = register_df[(register_df['Category'] == 'L-Category') & (register_df['CC_CM3'] < 40)]
-    df3.to_csv(output_folder / 'motos_amb_dades_cm3_erronies.csv', index=False)
+    df3.to_csv(paths.qa_l_category_cc_out_of_range, index=False)
 
     # Vehicles of every category with an activity above the maximum threshold of its category
     vehicles_with_erroneous_activity = []
@@ -42,11 +41,9 @@ def save_to_csv_vehicles_with_erroneous_data(register_df: pd.DataFrame, output_f
         vehicles_with_erroneous_activity.append(
             register_df[(register_df['Category'] == category) &
                         (register_df['Activity'] > activity_outliers_per_category_mapping[category]['Max_Activity'])])
-    if vehicles_with_erroneous_activity:
-        pd.concat(vehicles_with_erroneous_activity).to_csv(
-            output_folder / 'Vehicles_potencialment_amb_kilometratge_erroni.csv', index=False)
+    pd.concat(vehicles_with_erroneous_activity).to_csv(paths.qa_activity_outliers, index=False)
 
     df4 = register_df[(register_df['KM_DARRERA_ITV'] < register_df['KM_DARRERA_ITV2']) |
                       (register_df['KM_DARRERA_ITV2'] < register_df['KM_DARRERA_ITV3']) |
                       (register_df['KM_DARRERA_ITV3'] < register_df['KM_DARRERA_ITV4'])]
-    df4.to_csv(output_folder / 'Vehicles_amb_kilometrate_itv_anterior_menor.csv', index=False)
+    df4.to_csv(paths.qa_km_decreasing_between_itv, index=False)
