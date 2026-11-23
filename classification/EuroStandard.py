@@ -70,7 +70,15 @@ def euro_standard_identification_by_year_of_manufacturing(row) -> str | None:
             
     # Technology classification of Light Commercial Vehicles
     elif row['Category'] == 'Light Commercial Vehicles':
-        if row['Segment'] == 'N1-I':
+        if row['Fuel'] == 'Battery electric':  # All the segments
+            if row['ANY_FABRICACIO'] < 2019:
+                return 'Euro 6 a/b/c'
+            elif row['ANY_FABRICACIO'] <= 2020:
+                return 'Euro 6 d-temp'
+            elif row['ANY_FABRICACIO'] < 2026:
+                return 'Euro 6 d/e'
+            return 'Euro 7'
+        elif row['Segment'] == 'N1-I':
             if row['Fuel'] == 'Diesel' or row['Fuel'] == 'Petrol':
                 if row['ANY_FABRICACIO'] < 1995:
                     return 'Conventional'

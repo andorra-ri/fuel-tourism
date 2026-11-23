@@ -20,6 +20,33 @@ MIN_PASSENGER_CAR_CC = 560
 MAX_PASSENGER_CAR_CC = 8500
 
 
+def normalise_fuels_to_copert(df: pd.DataFrame) -> pd.Series:
+    """
+    Assign the fuel of the vehicles whose combination Category-Fuel does not exist in the COPERT stock configuration
+    (Stock_Configuration_Andorra.csv) to the closest one. Mild hybrids are vehicles with the emission factors of the
+    conventional vehicle (EMEP/EEA guidebook, Passenger cars, hybrid). Modifies df in place.
+
+    :return: mask of the Heavy Duty Trucks that were hybrids (COPERT has no hybrid Heavy Duty Trucks)
+    """
+    category = df['Category'].copy()  # Copies: the masks must use the values before the changes
+    fuel = df['Fuel'].copy()
+    petrol_like = ['Petrol Hybrid', 'Petrol PHEV']
+    diesel_like = ['Diesel Hybrid', 'Diesel PHEV']
+    hybrid_heavy_duty_trucks = (category == 'Heavy Duty Trucks') & fuel.isin(HYBRID_PHEV_TYPES)
+
+    # There are no motorcycles other than Petrol
+    df.loc[(category == 'L-Category') & fuel.isin(HYBRID_PHEV_TYPES + ['Diesel', 'LPG Bi-fuel']), 'Fuel'] = 'Petrol'
+    # There are no hybrid Heavy Duty Trucks nor LPG ones
+    df.loc[hybrid_heavy_duty_trucks, 'Fuel'] = 'Diesel'
+    df.loc[(category == 'Heavy Duty Trucks') & (fuel == 'LPG Bi-fuel'), 'Fuel'] = 'Petrol'
+    # Light Commercial Vehicles have only Petrol, Diesel and Battery electric
+    df.loc[(category == 'Light Commercial Vehicles') & fuel.isin(petrol_like + ['LPG Bi-fuel']), 'Fuel'] = 'Petrol'
+    df.loc[(category == 'Light Commercial Vehicles') & fuel.isin(diesel_like), 'Fuel'] = 'Diesel'
+    # There are no Diesel hybrid Passenger Cars (Diesel PHEV exists)
+    df.loc[(category == 'Passenger Cars') & (fuel == 'Diesel Hybrid'), 'Fuel'] = 'Diesel'
+    return hybrid_heavy_duty_trucks
+
+
 def passenger_cars_cc_out_of_range_mask(df: pd.DataFrame) -> pd.Series:
     """Mask of the non electric Passenger Cars with a known engine displacement out of the accepted range"""
     return ((df['Category'] == 'Passenger Cars') & df['Fuel'].isin(NON_ELECTRIC_FUEL_TYPES) &
@@ -49,6 +76,7 @@ def category_fuel_segment_euro_classification_wrapper_function(register_df: pd.D
     df = reclassification_light_commercial_to_heavy_duty_trucks(df)
     df = reclassification_heavy_duty_trucks_to_light_commercial_vehicles(df)
     df = reclassification_trial_bikes_to_off_road((df))
+    hybrid_heavy_duty_trucks = normalise_fuels_to_copert(df)
 
     df['Segment'] = df.apply(lambda row: segment_identification_for_each_category(row), axis=1)
     # For non electric vehicles with erroneous weight or CC_M3 data, assigns Segment by the distribution of their own
@@ -81,16 +109,12 @@ def category_fuel_segment_euro_classification_wrapper_function(register_df: pd.D
            (df['Segment'] == 'Mini') &
            ((df['Euro Standard'] == 'Euro 3') | (df['Euro Standard'] == 'Euro 2') | (df['Euro Standard'] == 'Euro 1')),
            'Euro Standard'] = 'Euro 4'
-    # There are no motorcycles other than Petrol
-    df.loc[(df['Category'] == 'L-Category') &
-           ((df['Fuel'] == 'Diesel') | (df['Fuel'] == 'Diesel Hybrid') | (df['Fuel'] == 'Diesel PHEV') |
-            (df['Fuel'] == 'Petrol PHEV') | (df['Fuel'] == 'Petrol Hybrid')),
-           'Fuel'] = 'Petrol'
-    # There are no hybrid Heavy Duty Trucks, we assigned them a newer Euro Standard
-    # The mask is calculated once, before modifying Fuel
-    hybrid_heavy_duty_trucks = (df['Category'] == 'Heavy Duty Trucks') & df['Fuel'].isin(HYBRID_PHEV_TYPES)
-    df.loc[hybrid_heavy_duty_trucks, 'Fuel'] = 'Diesel'
+    # Hybrid Heavy Duty Trucks (now Diesel, see normalise_fuels_to_copert) are assigned a newer Euro Standard
     df.loc[hybrid_heavy_duty_trucks, 'Euro Standard'] = 'Euro VI D/E'
+    # COPERT has a single segment, without Euro Standard changes, for the Petrol Heavy Duty Trucks
+    petrol_heavy_duty_trucks = (df['Category'] == 'Heavy Duty Trucks') & (df['Fuel'] == 'Petrol')
+    df.loc[petrol_heavy_duty_trucks, 'Segment'] = '>3,5 t'
+    df.loc[petrol_heavy_duty_trucks, 'Euro Standard'] = 'Conventional'
     # Disel PHEV Passenger Cars can only be Large-SUV-Executive
     df.loc[(df['Category'] == 'Passenger Cars') &
            (df['Fuel'] == 'Diesel PHEV'), 'Segment'] = 'Large-SUV-Executive'

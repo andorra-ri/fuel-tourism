@@ -8,6 +8,7 @@ Reads the Excel register of ITV and saves:
     exports/     input files for COPERT
 """
 import logging
+from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
@@ -38,6 +39,10 @@ PARTITIONS = ['Category', 'Fuel', 'Segment', 'Euro Standard']
 ACTIVITY_COLUMNS = ['Mean_Activity', 'Min_Activity', 'Max_Activity', 'Std_Activity', 'Mean_Lifetime_Activity']
 # Columns of the file with the stock and activity per category that are the input of COPERT
 COPERT_COLUMNS = PARTITIONS + ['Stock', 'Mean_Activity', 'Mean_Lifetime_Activity']
+# Stock configuration of COPERT for Andorra: the combinations Category, Fuel, Segment and Euro Standard it accepts
+COPERT_STOCK_CONFIGURATION = Path(__file__).resolve().parent.parent / 'classification' / 'Stock_Configuration_Andorra.csv'
+# Names that are different in COPERT
+COPERT_FUEL_NAMES = {'LPG Bi-fuel': 'LPG Bifuel'}
 
 
 def add_snapshot_columns(df: pd.DataFrame, settings: SimpleNamespace) -> pd.DataFrame:
@@ -73,6 +78,34 @@ def calculate_vehicles_activity(vehicles_df: pd.DataFrame, settings: SimpleNames
     (df['Num_of_days'], df['Mileage'], df['Activity'], df['Lifetime Activity'],
      df['activity_method'], df['itv_pairs_used']) = zip(*result)
     return df
+
+
+def copert_stock_activity_table(stock_activity_df: pd.DataFrame, configuration_file=COPERT_STOCK_CONFIGURATION
+                                ) -> pd.DataFrame:
+    """
+    Stock and activity with the names of COPERT. The categories that COPERT does not cover are left out: Off Road and
+    electric motorcycles (their electricity demand is calculated apart for LEAP). The Segment of the vehicles with no
+    segment is "-". The combinations that are not in the stock configuration of COPERT are logged as a warning.
+    """
+    table = stock_activity_df.copy()
+    not_covered = ((table['Category'] == 'Off Road') |
+                   ((table['Category'] == 'L-Category') & (table['Fuel'] == 'Battery electric')))
+    logger.info(f'Vehicles that COPERT does not cover, left out of its file: {int(table.loc[not_covered, "Stock"].sum())}')
+    table = table[~not_covered].copy()
+    table['Fuel'] = table['Fuel'].replace(COPERT_FUEL_NAMES)
+    table['Segment'] = table['Segment'].fillna('-')
+    table['Euro Standard'] = table['Euro Standard'].fillna('')
+
+    if Path(configuration_file).exists():
+        configuration = pd.read_csv(configuration_file, index_col=False).dropna(subset=['Category'])
+        configuration = configuration[configuration['Include']].fillna({'Segment': '-', 'Euro Standard': ''})
+        merged = table.merge(configuration[PARTITIONS].assign(in_configuration=True), on=PARTITIONS, how='left')
+        missing = merged[merged['in_configuration'].isna()]
+        if not missing.empty:
+            logger.warning(f'Categories that are not in the stock configuration of COPERT: {missing.shape[0]}, with '
+                           f'{int(missing["Stock"].sum())} vehicles: '
+                           f'{missing[PARTITIONS + ["Stock"]].to_dict("records")}')
+    return table[COPERT_COLUMNS]
 
 
 def stock_by_year(vehicles_df: pd.DataFrame, year_column: str) -> pd.DataFrame:
@@ -180,7 +213,7 @@ def run_calculation(settings: SimpleNamespace, paths: OutputPaths) -> dict:
     stock_activity_to_save.to_csv(paths.stock_activity, index=False)
 
     # EXPORT: input of COPERT, with the names of the columns that it uses
-    stock_activity[COPERT_COLUMNS].to_csv(paths.copert_stock_activity, index=False)
+    copert_stock_activity_table(stock_activity).to_csv(paths.copert_stock_activity, index=False)
 
     logger.info('Calculation finished')
     return {'vehicles': vehicles_to_save, 'stock_activity': stock_activity_to_save,

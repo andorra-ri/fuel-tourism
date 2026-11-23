@@ -72,3 +72,33 @@ def test_euro_standard_of_passenger_cars_has_no_gaps(year, expected):
 def test_euro_standard_of_light_commercial_vehicles_n1_ii(fuel, year, expected):
     assert euro(pd.Series({'Category': 'Light Commercial Vehicles', 'Fuel': fuel, 'Segment': 'N1-II',
                            'ANY_FABRICACIO': year})) == expected
+
+
+def test_fuels_without_copert_equivalent_are_normalised():
+    from classification.ClassificationWrapper import normalise_fuels_to_copert
+    df = pd.DataFrame({
+        'Category': ['Passenger Cars', 'Light Commercial Vehicles', 'Light Commercial Vehicles', 'Heavy Duty Trucks',
+                     'L-Category', 'Passenger Cars'],
+        'Fuel': ['Diesel Hybrid', 'Petrol Hybrid', 'Diesel PHEV', 'Diesel Hybrid', 'Diesel', 'Diesel PHEV']})
+    hybrid_trucks = normalise_fuels_to_copert(df)
+    assert df['Fuel'].tolist() == ['Diesel', 'Petrol', 'Diesel', 'Diesel', 'Petrol', 'Diesel PHEV']
+    assert hybrid_trucks.tolist() == [False, False, False, True, False, False]
+
+
+def test_electric_light_commercial_vehicles_have_euro_in_every_segment():
+    for segment in ['N1-I', 'N1-II', 'N1-III']:
+        row = pd.Series({'Category': 'Light Commercial Vehicles', 'Fuel': 'Battery electric', 'Segment': segment,
+                         'ANY_FABRICACIO': 2022})
+        assert euro(row) == 'Euro 6 d/e'
+
+
+def test_copert_file_uses_the_names_of_copert():
+    from pipeline.calculation import copert_stock_activity_table
+    stock = pd.DataFrame({
+        'Category': ['Passenger Cars', 'L-Category', 'Off Road', 'Buses'],
+        'Fuel': ['LPG Bi-fuel', 'Battery electric', 'Petrol', 'Battery electric'],
+        'Segment': ['Small', None, None, None], 'Euro Standard': ['Euro 6 d/e', None, None, 'Euro VI D/E'],
+        'Stock': [1, 2, 3, 4], 'Mean_Activity': [1, 1, 1, 1], 'Mean_Lifetime_Activity': [1, 1, 1, 1]})
+    table = copert_stock_activity_table(stock)
+    assert table['Fuel'].tolist() == ['LPG Bifuel', 'Battery electric']
+    assert table['Segment'].tolist() == ['Small', '-']
