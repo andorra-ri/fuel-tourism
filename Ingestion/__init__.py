@@ -1,1 +1,0 @@
-from Ingestion.RegistresIngestor import register_ingestor_function

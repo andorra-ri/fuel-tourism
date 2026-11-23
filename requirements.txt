@@ -1,0 +1,8 @@
+pandas==2.2.2
+ordered-set
+xlrd
+openpyxl
+plotly
+pyarrow
+google-cloud-storage
+google-cloud-bigquery[pandas]
