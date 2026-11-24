@@ -52,9 +52,10 @@ Excel de 2024 (219 categorías, como el informe), clasificación validada contra
    de los diésel híbridos hay que repetir la carga del estudio 2025 (la tabla `stock_activity` gana filas y la vista de COPERT
    cambia). Pendiente: permisos de lectura para quien use las tablas, decidir si el Cloud Run Job (`Dockerfile`) se va a usar y
    si la tabla pasa a llamarse `vehicle_fleet_stock_activity`. Ensayo sin tocar nada: `--stage upload --dry-run`.
-5. **Renombrar el repositorio a `vehicle_fleet_activity`** en GitHub: lo tiene que hacer un administrador de la organización
-   (`gh repo rename vehicle_fleet_activity`). Dentro del código ya se llama así (README, Docker); el paquete Python sigue siendo
-   un conjunto de carpetas, no `vehicle_fleet_activity`. Después del cambio: `git remote set-url origin <nueva URL>`.
+5. **Renombrar el repositorio a `vehicle_fleet_activity`** en GitHub: parece que ya está hecho (al subir la rama, GitHub avisó
+   de que el repositorio se ha movido a `https://github.com/andorra-ri/vehicle_fleet_activity.git`). Falta actualizar el remoto
+   local: `git remote set-url origin https://github.com/andorra-ri/vehicle_fleet_activity.git`. Dentro del código ya se llama
+   así (README, Docker); el paquete Python sigue siendo un conjunto de carpetas, no `vehicle_fleet_activity`.
    Imagen y Cloud Run Job se llaman `vehicle-fleet-activity` (guiones, por las reglas de Artifact Registry y Cloud Run).
 6. **Integrar la rama:** `update-2026` parte de `update-2024`; PR #2 en borrador. Falta decidir qué hacer con `main`.
 7. **`Andorra_fleet_tier2.cop`** (29,6 MB, binario): decidir si se deja fuera del repositorio (`.gitignore`), se sube tal cual o con
