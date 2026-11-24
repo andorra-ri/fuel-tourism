@@ -42,8 +42,8 @@ def normalise_fuels_to_copert(df: pd.DataFrame) -> pd.Series:
     # Light Commercial Vehicles have only Petrol, Diesel and Battery electric
     df.loc[(category == 'Light Commercial Vehicles') & fuel.isin(petrol_like + ['LPG Bi-fuel']), 'Fuel'] = 'Petrol'
     df.loc[(category == 'Light Commercial Vehicles') & fuel.isin(diesel_like), 'Fuel'] = 'Diesel'
-    # There are no Diesel hybrid Passenger Cars (Diesel PHEV exists)
-    df.loc[(category == 'Passenger Cars') & (fuel == 'Diesel Hybrid'), 'Fuel'] = 'Diesel'
+    # The Diesel hybrid Passenger Cars keep their fuel in the classification (as in the report 2023). COPERT has no such
+    # category: in its file they are added to Passenger Cars - Diesel (see copert_stock_activity_table)
     return hybrid_heavy_duty_trucks
 
 

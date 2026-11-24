@@ -91,9 +91,9 @@ El log mostra el nombre de vehicles després de cada filtre. Si l'Excel té valo
 ## Classificació
 `ClassificationWrapper.py` encapsula les funcions del mòdul. La tipologia es defineix amb 4 classificacions:
 1. **Category**: segons el TIPUS de vehicle, les categories de COPERT (`Passenger Cars`, `Light Commercial Vehicles`, `Heavy Duty Trucks`, `Buses`, `L-Category`, `Off Road`). Detalls a `MappingConstants.py`.
-2. **Fuel**: segons el carburant. Detalls a `MappingConstants.py`.
+2. **Fuel**: segons el carburant. Detalls a `MappingConstants.py`. Els turismes híbrids dièsel es classifiquen com a `Diesel Hybrid` (com a l'informe 2023); com que COPERT no té aquesta categoria, al fitxer d'entrada de COPERT se sumen a `Passenger Cars - Diesel` (mateix segment i Euro), amb l'assumpció que el seu patró d'emissions no difereix de forma significativa del vehicle dièsel comparable (l'estoc se suma i l'activitat mitjana es pondera per l'estoc).
 3. **Segment**: segons el pes en buit, la cilindrada o la potència. Detalls a `CopertSegmentIdentification.py`.
-4. **Euro Standard**: segons l'any de fabricació i la categoria. Detalls a `EuroStandard.py`.
+4. **Euro Standard**: segons l'any de **fabricació** i la categoria. Detalls a `EuroStandard.py`. Els trams van entre 1 i 2 anys per darrere dels anys de primera matriculació de la taula 2-2 de la guia EMEP/EEA; es manté així de forma deliberada (decisió del 24/11/2026). Aplicar la taula tal qual canviaria la categoria Euro de moltes furgonetes i turismes, però gairebé no canviaria el consum d'energia calculat per COPERT (els MJ/km són iguals entre Euro 5 i Euro 6 per a la majoria de categories), només les emissions contaminants.
 
 **Re-classificació** (`ReClassification.py`): les tipologies FURGONETES, CAMIONETES i CAMIONS es solapen amb Light Commercial Vehicles (menys de 3500 kg) i Heavy Duty Trucks (3500 kg o més); les motos amb "trial" al model passen a Off Road.
 

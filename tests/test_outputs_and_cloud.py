@@ -179,3 +179,4 @@ def test_cloud_settings_are_required(tmp_path):
 def test_copert_view_has_the_same_rules_as_the_copert_file():
     sql = schema.copert_view_sql('project', 'dataset')
     assert "LPG Bifuel" in sql and "'Off Road'" in sql and "IFNULL(segment, '-')" in sql
+    assert "category = 'Passenger Cars' AND fuel = 'Diesel Hybrid' THEN 'Diesel'" in sql

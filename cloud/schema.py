@@ -75,18 +75,31 @@ def snake_case_schema(schema: dict) -> dict:
 def copert_view_sql(project: str, dataset: str) -> str:
     """
     View with the names that COPERT uses (same as exports/copert): LPG Bifuel, segment "-" and Euro Standard empty when
-    there is none. Off Road and electric motorcycles, that COPERT does not cover, are left out.
+    there is none. Off Road and electric motorcycles, that COPERT does not cover, are left out. The Diesel hybrid
+    Passenger Cars, that COPERT does not have, are added to the Diesel ones (the stock is added and the mean activities
+    are weighted by the stock).
     """
     return f"""
 CREATE OR REPLACE VIEW `{project}.{dataset}.copert_stock_activity` AS
-SELECT snapshot_date, study_year,
-       category AS Category,
-       IF(fuel = 'LPG Bi-fuel', 'LPG Bifuel', fuel) AS Fuel,
-       IFNULL(segment, '-') AS Segment,
-       IFNULL(euro_standard, '') AS `Euro Standard`,
-       stock AS Stock, mean_activity AS Mean_Activity, mean_lifetime_activity AS Mean_Lifetime_Activity
-FROM `{project}.{dataset}.stock_activity`
-WHERE category != 'Off Road' AND NOT (category = 'L-Category' AND fuel = 'Battery electric')
+SELECT snapshot_date, study_year, Category, Fuel, Segment, `Euro Standard`,
+       SUM(stock) AS Stock,
+       CAST(ROUND(SAFE_DIVIDE(SUM(stock * mean_activity), SUM(IF(mean_activity IS NULL, NULL, stock)))) AS INT64)
+           AS Mean_Activity,
+       CAST(ROUND(SAFE_DIVIDE(SUM(stock * mean_lifetime_activity),
+                              SUM(IF(mean_lifetime_activity IS NULL, NULL, stock)))) AS INT64)
+           AS Mean_Lifetime_Activity
+FROM (
+  SELECT snapshot_date, study_year, stock, mean_activity, mean_lifetime_activity,
+         category AS Category,
+         CASE WHEN fuel = 'LPG Bi-fuel' THEN 'LPG Bifuel'
+              WHEN category = 'Passenger Cars' AND fuel = 'Diesel Hybrid' THEN 'Diesel'
+              ELSE fuel END AS Fuel,
+         IFNULL(segment, '-') AS Segment,
+         IFNULL(euro_standard, '') AS `Euro Standard`
+  FROM `{project}.{dataset}.stock_activity`
+  WHERE category != 'Off Road' AND NOT (category = 'L-Category' AND fuel = 'Battery electric')
+)
+GROUP BY snapshot_date, study_year, Category, Fuel, Segment, `Euro Standard`
 """
 
 

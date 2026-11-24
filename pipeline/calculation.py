@@ -43,6 +43,9 @@ COPERT_COLUMNS = PARTITIONS + ['Stock', 'Mean_Activity', 'Mean_Lifetime_Activity
 COPERT_STOCK_CONFIGURATION = Path(__file__).resolve().parent.parent / 'classification' / 'Stock_Configuration_Andorra.csv'
 # Names that are different in COPERT
 COPERT_FUEL_NAMES = {'LPG Bi-fuel': 'LPG Bifuel'}
+# COPERT has no Diesel hybrid Passenger Cars: they are entered as Passenger Cars - Diesel (same Segment and Euro
+# Standard), assuming that their emissions do not differ significantly from those of the comparable diesel vehicle
+COPERT_FOLDED_FUELS = {('Passenger Cars', 'Diesel Hybrid'): 'Diesel'}
 
 
 def add_snapshot_columns(df: pd.DataFrame, settings: SimpleNamespace) -> pd.DataFrame:
@@ -80,12 +83,42 @@ def calculate_vehicles_activity(vehicles_df: pd.DataFrame, settings: SimpleNames
     return df
 
 
+def fold_fuels_not_in_copert(table: pd.DataFrame) -> pd.DataFrame:
+    """
+    Rename the fuels that COPERT does not have (COPERT_FOLDED_FUELS) to the one they are entered with, and add the rows
+    that end up in the same Category, Fuel, Segment and Euro Standard: the Stock is added and the mean activities are
+    the average weighted by the Stock (the total km do not change).
+    """
+    table = table.copy()
+    changed = pd.Series(False, index=table.index)
+    for (category, fuel), copert_fuel in COPERT_FOLDED_FUELS.items():
+        mask = (table['Category'] == category) & (table['Fuel'] == fuel)
+        table.loc[mask, 'Fuel'] = copert_fuel
+        changed |= mask
+    if not changed.any():
+        return table
+
+    mean_columns = ['Mean_Activity', 'Mean_Lifetime_Activity']
+    grouped = table.groupby(PARTITIONS, as_index=False, dropna=False)
+    result = grouped.agg(Stock=('Stock', 'sum'))
+    for column in mean_columns:
+        weights = table['Stock'].where(table[column].notna(), 0)
+        weighted = (table['Stock'] * table[column]).where(table[column].notna(), 0)
+        sums = pd.DataFrame({column: weighted, 'weight': weights, **{p: table[p] for p in PARTITIONS}}).groupby(
+            PARTITIONS, as_index=False, dropna=False).sum()
+        sums[column] = (sums[column] / sums['weight'].where(sums['weight'] > 0)).round().astype('Int64')
+        result = result.merge(sums[PARTITIONS + [column]], on=PARTITIONS, how='left')
+    return result[PARTITIONS + ['Stock'] + mean_columns]
+
+
 def copert_stock_activity_table(stock_activity_df: pd.DataFrame, configuration_file=COPERT_STOCK_CONFIGURATION
                                 ) -> pd.DataFrame:
     """
     Stock and activity with the names of COPERT. The categories that COPERT does not cover are left out: Off Road and
     electric motorcycles (their electricity demand is calculated apart for LEAP). The Segment of the vehicles with no
-    segment is "-". The combinations that are not in the stock configuration of COPERT are logged as a warning.
+    segment is "-". The Diesel hybrid Passenger Cars are added to the Diesel ones (the stock is added and the mean
+    activity is weighted by the stock). The combinations that are not in the stock configuration of COPERT are logged
+    as a warning.
     """
     table = stock_activity_df.copy()
     not_covered = ((table['Category'] == 'Off Road') |
@@ -95,6 +128,7 @@ def copert_stock_activity_table(stock_activity_df: pd.DataFrame, configuration_f
     table['Fuel'] = table['Fuel'].replace(COPERT_FUEL_NAMES)
     table['Segment'] = table['Segment'].fillna('-')
     table['Euro Standard'] = table['Euro Standard'].fillna('')
+    table = fold_fuels_not_in_copert(table)
 
     if Path(configuration_file).exists():
         configuration = pd.read_csv(configuration_file, index_col=False).dropna(subset=['Category'])

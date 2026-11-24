@@ -81,8 +81,28 @@ def test_fuels_without_copert_equivalent_are_normalised():
                      'L-Category', 'Passenger Cars'],
         'Fuel': ['Diesel Hybrid', 'Petrol Hybrid', 'Diesel PHEV', 'Diesel Hybrid', 'Diesel', 'Diesel PHEV']})
     hybrid_trucks = normalise_fuels_to_copert(df)
-    assert df['Fuel'].tolist() == ['Diesel', 'Petrol', 'Diesel', 'Diesel', 'Petrol', 'Diesel PHEV']
+    # Diesel hybrid passenger cars keep their fuel (they are added to the Diesel ones only in the file of COPERT)
+    assert df['Fuel'].tolist() == ['Diesel Hybrid', 'Petrol', 'Diesel', 'Diesel', 'Petrol', 'Diesel PHEV']
     assert hybrid_trucks.tolist() == [False, False, False, True, False, False]
+
+
+def test_diesel_hybrid_passenger_cars_enter_copert_as_diesel_with_weighted_activity():
+    from pipeline.calculation import copert_stock_activity_table
+    stock = pd.DataFrame({
+        'Category': ['Passenger Cars'] * 4,
+        'Fuel': ['Diesel', 'Diesel Hybrid', 'Diesel Hybrid', 'Petrol Hybrid'],
+        'Segment': ['Medium', 'Medium', 'Large-SUV-Executive', 'Medium'],
+        'Euro Standard': ['Euro 6 d/e', 'Euro 6 d/e', 'Euro 6 d/e', 'Euro 6 d/e'],
+        'Stock': [300, 100, 20, 7],
+        'Mean_Activity': [10000, 14000, 20000, 9000], 'Mean_Lifetime_Activity': [50000, 70000, 10000, 40000]})
+    table = copert_stock_activity_table(stock).set_index(['Fuel', 'Segment'])
+    assert 'Diesel Hybrid' not in table.index.get_level_values('Fuel')
+    medium = table.loc[('Diesel', 'Medium')]
+    assert medium['Stock'] == 400
+    assert medium['Mean_Activity'] == 11000        # (300 x 10000 + 100 x 14000) / 400
+    assert medium['Mean_Lifetime_Activity'] == 55000
+    assert table.loc[('Diesel', 'Large-SUV-Executive'), 'Stock'] == 20
+    assert table['Stock'].sum() == 427              # no vehicle is lost
 
 
 def test_electric_light_commercial_vehicles_have_euro_in_every_segment():
