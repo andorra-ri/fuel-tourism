@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 from cloud import schema, upload
-from exports.leap import build_leap_electricity_table, electric_motorcycles_energy_tj, write_leap_excel
+from exports.leap import (build_leap_electricity_table, electric_motorcycles_energy_tj, read_copert_results,
+                          write_leap_excel)
 from pipeline.paths import OutputPaths
 from data_cleaning.type_conversion import convert_to_integer_df_columns
 
@@ -61,6 +62,26 @@ def test_leap_table_and_excel(tmp_path):
     rows = list(openpyxl.load_workbook(tmp_path / 'leap.xlsx').active.iter_rows(values_only=True))
     assert rows[0][0] == 'Final Energy Demand' and rows[5] == ('Branch', 2025) and rows[-1][0] == 'Total'
     assert rows[-1][1] == pytest.approx(table['Energy_TJ'].sum())
+
+
+def test_leap_reads_the_export_of_copert_adding_all_the_emissions(tmp_path):
+    export = pd.DataFrame({
+        'Emission': ['Hot', 'Cold', 'A/C', 'Hot', 'Hot', 'Hot'],
+        'Category': ['Passenger Cars'] * 4 + ['Buses', 'Passenger Cars'],
+        'Fuel': ['Battery electric', 'Petrol PHEV', 'Petrol PHEV', 'Petrol PHEV', 'Battery electric', 'Petrol'],
+        'Segment': ['Mini', 'Small', 'Small', 'Small', '_', 'Mini'],
+        'Euro Standard': ['Euro 6 d/e', 'Euro 6 a/b/c', 'Euro 6 a/b/c', 'Euro 6 d/e', 'Euro VI', 'Euro 4'],
+        'EC [TJ]': ['EC'] * 6,
+        'Total': [0.7, 1.0, 0.5, 8.5, 0.0, 50.0]})
+    path = tmp_path / 'copert_export.xlsx'
+    with pd.ExcelWriter(path) as writer:
+        pd.DataFrame({'x': [1]}).to_excel(writer, sheet_name='pivot_table', index=False)
+        export.to_excel(writer, sheet_name='EXPORT', index=False)
+    no_motorcycles = pd.DataFrame({'Category': [], 'Fuel': [], 'Stock': [], 'Mean_Activity': []})
+    table = build_leap_electricity_table(read_copert_results(path), no_motorcycles, 0.4, 16)
+    # Cold, A/C and Hot of the PHEV are added (10.0 x 40 %), and the electric bus has no energy
+    assert dict(zip(table['Branch'], table['Energy_TJ'])) == pytest.approx(
+        {'Passenger Cars\\Battery electric\\Mini': 0.7, 'Passenger Cars\\Petrol PHEV\\Small': 4.0})
 
 
 def test_leap_needs_the_columns_of_copert():

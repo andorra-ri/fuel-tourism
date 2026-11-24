@@ -14,7 +14,7 @@ pip install -r requirements-dev.txt   # to run the tests: python -m pytest tests
 python main.py --settings settings_2026                   # calculation + charts (study of the year 2025)
 python main.py --settings settings_2026 --stage calculate
 python main.py --settings settings_2026 --stage charts    # charts from the aggregated tables
-python main.py --settings settings_2026 --stage export --copert-results copert_results.csv   # file for LEAP
+python main.py --settings settings_2026 --stage export --copert-results consum_total_copert_2026.xlsx   # file for LEAP, from the export of COPERT
 python main.py --settings settings_2026 --stage upload    # Cloud Storage and BigQuery (see docs/cloud.md)
 python main.py --settings settings_2023                   # validation study of the year 2023
 ```

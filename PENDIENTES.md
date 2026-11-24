@@ -1,7 +1,7 @@
 # Pendientes (rama `update-2026`)
 
 Hecho y comprobado: estudio 2025 con el Excel de 2026 (84.658 vehículos, 208 categorías), validación 2023 con el Excel de 2024,
-clasificación validada contra `Stock_Configuration_Andorra.csv` de COPERT, 60 pruebas, pandas 2.2.2 y 3.0.5.
+clasificación validada contra `Stock_Configuration_Andorra.csv` de COPERT, 64 pruebas, pandas 2.2.2 y 3.0.5.
 
 ## Decisiones tuyas
 
@@ -17,9 +17,14 @@ clasificación validada contra `Stock_Configuration_Andorra.csv` de COPERT, 60 p
 ## Necesito datos o confirmación de otros
 
 6. **Plantilla de importación de COPERT.** El stock ya valida contra su configuración (0 categorías fuera); falta el formato
-   de entrada de la actividad por categoría.
-7. **Formato de los resultados de COPERT** para generar el Excel de LEAP. Supuesto: CSV `Category, Fuel, Segment, Energy_TJ`.
-8. **Motos eléctricas:** 0,0736 TJ (Excel de LEAP) frente a 0,0588 (informe y fórmula). Confirmar la vigente.
+   de entrada de la actividad por categoría (el fichero `Andorra_fleet_tier2.cop` ya está en la carpeta, pero es un zip con un binario propio de COPERT que no se
+   puede leer sin el programa; la usuaria importa un CSV). El `stock_activity_2023.csv` del informe tiene 219 categorías, con Mileage, Min, Max y Std; el nuestro 206 para COPERT
+   (sin Off Road ni las que COPERT no cubre) y 210 en `fleet_stock_activity`.
+7. ~~**Formato de los resultados de COPERT**~~ Resuelto: `exports/leap.py` lee la hoja `EXPORT` de COPERT (suma todos los
+   tipos de emisión). Con los ficheros de 2023 reproduce la Tabla 3 del informe (11,233 TJ).
+8. **Motos eléctricas:** el 0,0736 TJ del Excel de LEAP son 143 × 2.572 km × **20** MJ/100 km; el informe y el código usan
+   **16** MJ/100 km (0,0588). Además el Excel de LEAP es ~0,27 % mayor en todas las filas (otra pasada de COPERT).
+   Confirmar el consumo vigente (16 o 20 MJ/100 km).
 9. **Área de Transportes:** por qué el histórico cambia entre ficheros (stock 2023: 79.131 con el Excel de 2024, 81.348 con el
    de 2026), identificador de vehículo (`TIPUS + MATRICULA` no coincide entre ficheros), duplicados (1.422 y 1.583) y altas
    con fecha futura (hasta 2029 en el Excel de 2024).

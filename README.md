@@ -20,7 +20,7 @@ Copiar l’Excel del registre de vehicles a la carpeta ``_data`` del repositori 
 python main.py --settings settings_2026                    # càlcul + gràfics (estudi de l'any 2025)
 python main.py --settings settings_2026 --stage calculate  # només el càlcul
 python main.py --settings settings_2026 --stage charts     # només els gràfics, a partir de les taules ja calculades
-python main.py --settings settings_2026 --stage export --copert-results resultats_copert.csv   # fitxer per a LEAP
+python main.py --settings settings_2026 --stage export --copert-results consum_total_copert_2026.xlsx   # fitxer per a LEAP, a partir de l'exportació de COPERT
 python main.py --settings settings_2026 --stage upload     # Cloud Storage i BigQuery (veure docs/cloud.md)
 python main.py --settings settings_2023                    # estudi de validació de l'any 2023 (Excel del 2024)
 ```
@@ -137,7 +137,7 @@ Totes les funcions retornen la figura; amb `--show` s'obren al navegador.
 
 ## COPERT i LEAP
 * `exports/copert/copert_stock_activity_*.csv`: `Category, Fuel, Segment, Euro Standard, Stock, Mean_Activity, Mean_Lifetime_Activity`. **Pendent de confirmar la plantilla d'importació de COPERT**; mentrestant es mantenen aquests noms de columna.
-* `exports/leap/`: a partir dels resultats d'energia de COPERT (CSV amb `Category, Fuel, Segment, Energy_TJ`) es genera l'Excel de demanda final d'electricitat amb el format de `energy_demand_electric_transport_2023.xlsx`: vehicles elèctrics, el 40 % dels PHEV i les motos elèctriques (que COPERT no cobreix) calculades amb l'estoc, l'activitat mitjana i el consum.
+* `exports/leap/`: a partir dels resultats d'energia de COPERT, tal com els exporta (Excel amb el full `EXPORT`, columnes `Emission, Category, Fuel, Segment, Euro Standard, EC [TJ], …, Total`; també val un CSV `Category, Fuel, Segment, Energy_TJ`), es genera l'Excel de demanda final d'electricitat amb el format de `energy_demand_electric_transport_2023.xlsx`: vehicles elèctrics, el 40 % dels PHEV i les motos elèctriques (que COPERT no cobreix) calculades amb l'estoc, l'activitat mitjana i el consum (16 MJ/100 km, com a l'informe 2023). Se sumen tots els tipus d'emissió (Hot, Cold, A/C, Evaporation) i les branques sense energia (p. ex. autobusos elèctrics) no hi surten. Amb el fitxer `consum_total_copert_2023_andorra.xlsx` i `stock_activity_2023.csv` es reprodueix la Taula 3 de l'informe 2023 (11,233 TJ).
 
 ## Google Cloud
 Veure `docs/cloud.md` (estructura del bucket, taules de BigQuery, càrrega idempotent, permisos i Cloud Run Job).

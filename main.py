@@ -27,7 +27,7 @@ def parse_arguments(argv=None) -> argparse.Namespace:
     parser.add_argument('--dry-run', action='store_true',
                         help='stage upload: only show what would be created and uploaded, without touching Google Cloud')
     parser.add_argument('--copert-results', default=None,
-                        help='csv file with the electricity demand calculated by COPERT (stage export)')
+                        help='Excel or csv file with the results of COPERT, as exported by COPERT (stage export)')
     return parser.parse_args(argv)
 
 
