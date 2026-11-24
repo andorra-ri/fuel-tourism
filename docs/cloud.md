@@ -52,9 +52,9 @@ L'etapa crea el dataset si no existeix i carrega les taules. El bucket només es
 El `Dockerfile` executa `python main.py` amb els arguments del job. Els registres van a la sortida estàndard.
 
 ```bash
-gcloud builds submit --tag europe-west9-docker.pkg.dev/ari-datahub/<repo>/andorra-fleet-activity
-gcloud run jobs create andorra-fleet-activity-2026 \
-  --image europe-west9-docker.pkg.dev/ari-datahub/<repo>/andorra-fleet-activity \
+gcloud builds submit --tag europe-west9-docker.pkg.dev/ari-datahub/<repo>/vehicle-fleet-activity
+gcloud run jobs create vehicle-fleet-activity-2026 \
+  --image europe-west9-docker.pkg.dev/ari-datahub/<repo>/vehicle-fleet-activity \
   --region europe-west9 --memory 4Gi --task-timeout 30m \
   --args="--settings,settings_2026,--stage,all"
 ```

@@ -36,9 +36,10 @@ clasificación validada contra `Stock_Configuration_Andorra.csv` de COPERT, 64 p
     `aggregated_fleet` en `ari-datahub` (`europe-west9`), solo tablas agregadas. Repetir la carga no duplica filas
     (comprobado). Pendiente: permisos de lectura para quien use las tablas, y decidir si el Cloud Run Job (`Dockerfile`)
     se va a usar. Ensayo sin tocar nada: `--stage upload --dry-run`.
-12. **Renombrar el repositorio a `andorra-fleet-activity`** en GitHub: lo tiene que hacer un administrador de la organización
-    (`gh repo rename andorra-fleet-activity`). Dentro del código ya se llama así (README, Docker); el paquete Python sigue siendo
-    un conjunto de carpetas, no `andorra_fleet_activity`.
+12. **Renombrar el repositorio a `vehicle_fleet_activity`** en GitHub: lo tiene que hacer un administrador de la organización
+    (`gh repo rename vehicle_fleet_activity`). Dentro del código ya se llama así (README, Docker); el paquete Python sigue siendo
+    un conjunto de carpetas, no `vehicle_fleet_activity`. Después del cambio: `git remote set-url origin <nueva URL>`.
+    Imagen y Cloud Run Job se llaman `vehicle-fleet-activity` (guiones, por las reglas de Artifact Registry y Cloud Run).
 13. **Integrar la rama:** `update-2026` parte de `update-2024`; falta abrir PR y decidir qué hacer con `main`.
 14. **Cobertura de actividad:** solo el 1,7 % de los fabricados desde 2022 tiene actividad propia; el resto usa el Euro anterior
     (`Activity_Grouping` lo indica por categoría).
