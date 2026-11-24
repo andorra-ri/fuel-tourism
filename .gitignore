@@ -131,3 +131,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Registre de vehicles amb matricules (dades personals): no es puja mai al repositori
+*Historic_vehicles*.xlsx
